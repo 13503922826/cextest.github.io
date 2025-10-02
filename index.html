@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>币安Alpha记账工具</title>
+    <title>币安Alpha记账日历</title>
     <!-- 使用更可靠的CDN链接 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
@@ -107,6 +107,12 @@
                 <select id="userSelector" class="bg-transparent border-none focus:ring-0" onchange="switchUser(this.value)">
                     <!-- Users will be populated here -->
                 </select>
+                <button onclick="showEditUserModal()" class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-edit text-xl"></i>
+                </button>
+                <button onclick="showDeleteUserModal()" class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-trash text-xl"></i>
+                </button>
                 <button onclick="showAddUserModal()" class="text-gray-600 hover:text-gray-900">
                     <i class="fas fa-plus-circle text-xl"></i>
                 </button>
@@ -295,6 +301,49 @@
         </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal fade-in">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditUserModal()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">编辑用户</h2>
+            <form id="editUserForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="editUserName">
+                        用户名
+                    </label>
+                    <input type="text" id="editUserName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="hidden" id="editUserId">
+                </div>
+                <div class="flex items-center justify-end">
+                    <button type="button" onclick="closeEditUserModal()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                        取消
+                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <div id="deleteUserModal" class="modal fade-in">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeleteUserModal()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">删除用户</h2>
+            <p class="mb-4">确定要删除用户 "<span id="deleteUserName"></span>" 吗？此操作无法撤销。</p>
+            <input type="hidden" id="deleteUserId">
+            <div class="flex items-center justify-end">
+                <button type="button" onclick="closeDeleteUserModal()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                    取消
+                </button>
+                <button onclick="confirmDeleteUser()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    删除
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Import Modal -->
     <div id="importModal" class="modal fade-in">
         <div class="modal-content">
@@ -347,6 +396,7 @@
             // Setup form submission handlers
             document.getElementById('entryForm').addEventListener('submit', saveEntry);
             document.getElementById('addUserForm').addEventListener('submit', addUser);
+            document.getElementById('editUserForm').addEventListener('submit', editUser);
         };
 
         // User Management Functions
@@ -383,6 +433,39 @@
             document.getElementById('newUserName').value = '';
         }
 
+        function showEditUserModal() {
+            if (!currentUser) return;
+            
+            const user = users.find(u => u.id === currentUser);
+            if (user) {
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editUserName').value = user.name;
+                document.getElementById('editUserModal').style.display = 'block';
+            }
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+            document.getElementById('editUserName').value = '';
+            document.getElementById('editUserId').value = '';
+        }
+
+        function showDeleteUserModal() {
+            if (!currentUser) return;
+            
+            const user = users.find(u => u.id === currentUser);
+            if (user) {
+                document.getElementById('deleteUserId').value = user.id;
+                document.getElementById('deleteUserName').textContent = user.name;
+                document.getElementById('deleteUserModal').style.display = 'block';
+            }
+        }
+
+        function closeDeleteUserModal() {
+            document.getElementById('deleteUserModal').style.display = 'none';
+            document.getElementById('deleteUserId').value = '';
+        }
+
         function addUser(e) {
             e.preventDefault();
             const name = document.getElementById('newUserName').value.trim();
@@ -404,6 +487,51 @@
                 refreshPointsPrediction();
                 
                 closeAddUserModal();
+            }
+        }
+
+        function editUser(e) {
+            e.preventDefault();
+            const userId = document.getElementById('editUserId').value;
+            const newName = document.getElementById('editUserName').value.trim();
+            
+            if (userId && newName) {
+                const userIndex = users.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    users[userIndex].name = newName;
+                    localStorage.setItem('accountingUsers', JSON.stringify(users));
+                    loadUsers();
+                    closeEditUserModal();
+                }
+            }
+        }
+
+        function confirmDeleteUser() {
+            const userId = document.getElementById('deleteUserId').value;
+            
+            if (userId) {
+                // Confirm deletion
+                if (confirm('确定要删除此用户及其所有数据吗？此操作无法撤销。')) {
+                    // Remove user from users array
+                    users = users.filter(u => u.id !== userId);
+                    localStorage.setItem('accountingUsers', JSON.stringify(users));
+                    
+                    // Delete user's data
+                    localStorage.removeItem(`accountingData_${userId}`);
+                    
+                    // Switch to another user if available
+                    if (users.length > 0) {
+                        currentUser = users[0].id;
+                    } else {
+                        currentUser = null;
+                    }
+                    
+                    loadUsers();
+                    loadData();
+                    renderCalendar(currentYear, currentMonth);
+                    refreshPointsPrediction();
+                    closeDeleteUserModal();
+                }
             }
         }
 
