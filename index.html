@@ -102,6 +102,9 @@
         </div>
         <div class="flex items-center space-x-4">
             <!-- User Selector -->
+            <button onclick="showAccountOverview()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
+                <i class="fas fa-chart-bar"></i> 账户总览
+            </button>
             <div class="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2">
                 <i class="fas fa-user text-gray-600"></i>
                 <select id="userSelector" class="bg-transparent border-none focus:ring-0" onchange="switchUser(this.value)">
@@ -827,22 +830,27 @@
 
         // Import/Export Functions
         function exportData() {
-            if (!currentUser) {
-                alert('请先选择一个用户');
-                return;
-            }
-            
-            const dataToExport = {
-                user: users.find(u => u.id === currentUser),
-                data: accountingData
+            // Export all users data
+            const allDataToExport = {
+                users: users,
+                data: {}
             };
             
-            const dataStr = JSON.stringify(dataToExport, null, 2);
+            // Collect data for all users
+            users.forEach(user => {
+                const userData = JSON.parse(localStorage.getItem(`accountingData_${user.id}`)) || {};
+                allDataToExport.data[user.id] = {
+                    user: user,
+                    data: userData
+                };
+            });
+            
+            const dataStr = JSON.stringify(allDataToExport, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = `accounting-data-${currentUser}.json`;
+            link.download = `all-accounting-data-${new Date().toISOString().slice(0, 10)}.json`;
             link.click();
         }
 
@@ -869,31 +877,74 @@
                 try {
                     const importedData = JSON.parse(e.target.result);
                     
-                    // If it contains user info, add the user
-                    if (importedData.user) {
-                        // Check if user already exists
-                        const existingUser = users.find(u => u.id === importedData.user.id);
+                    // Check if this is a multi-user export file
+                    if (importedData.users && importedData.data) {
+                        // Import all users
+                        let importedUsersCount = 0;
+                        let importedDataCount = 0;
                         
-                        if (!existingUser) {
-                            users.push(importedData.user);
-                            localStorage.setItem('accountingUsers', JSON.stringify(users));
-                        }
+                        // Import users
+                        importedData.users.forEach(importedUser => {
+                            // Check if user already exists
+                            const existingUser = users.find(u => u.id === importedUser.id);
+                            
+                            if (!existingUser) {
+                                users.push(importedUser);
+                                importedUsersCount++;
+                            }
+                        });
                         
-                        // Switch to imported user
-                        currentUser = importedData.user.id;
+                        // Save updated users list
+                        localStorage.setItem('accountingUsers', JSON.stringify(users));
+                        
+                        // Import data for each user
+                        Object.keys(importedData.data).forEach(userId => {
+                            const userData = importedData.data[userId];
+                            if (userData.data) {
+                                localStorage.setItem(`accountingData_${userId}`, JSON.stringify(userData.data));
+                                importedDataCount++;
+                            }
+                        });
+                        
+                        // Reload current user data
+                        loadData();
                         loadUsers();
-                    }
-                    
-                    // Import data
-                    if (importedData.data) {
-                        accountingData = importedData.data;
-                        saveData();
                         renderCalendar(currentYear, currentMonth);
                         refreshPointsPrediction();
+                        
+                        closeImportModal();
+                        alert(`数据导入成功！新增${importedUsersCount}个用户，导入${importedDataCount}个用户的数据。`);
+                    } 
+                    // Check if this is a single user export file (old format)
+                    else if (importedData.user) {
+                        // If it contains user info, add the user
+                        if (importedData.user) {
+                            // Check if user already exists
+                            const existingUser = users.find(u => u.id === importedData.user.id);
+                            
+                            if (!existingUser) {
+                                users.push(importedData.user);
+                                localStorage.setItem('accountingUsers', JSON.stringify(users));
+                            }
+                            
+                            // Switch to imported user
+                            currentUser = importedData.user.id;
+                            loadUsers();
+                        }
+                        
+                        // Import data
+                        if (importedData.data) {
+                            accountingData = importedData.data;
+                            saveData();
+                            renderCalendar(currentYear, currentMonth);
+                            refreshPointsPrediction();
+                        }
+                        
+                        closeImportModal();
+                        alert('数据导入成功！');
+                    } else {
+                        throw new Error('文件格式不正确');
                     }
-                    
-                    closeImportModal();
-                    alert('数据导入成功！');
                 } catch (error) {
                     console.error('导入失败:', error);
                     alert('导入失败：文件格式不正确');
@@ -908,6 +959,7 @@
             const entryModal = document.getElementById('entryModal');
             const addUserModal = document.getElementById('addUserModal');
             const importModal = document.getElementById('importModal');
+            const accountOverviewModal = document.getElementById('accountOverviewModal');
             
             if (event.target === entryModal) {
                 closeEntryModal();
@@ -920,7 +972,184 @@
             if (event.target === importModal) {
                 closeImportModal();
             }
+            
+            if (event.target === accountOverviewModal) {
+                closeAccountOverview();
+            }
         };
+        
+        // Check if user has made trades today
+        function checkTodayTrade(userData) {
+            // Get today's date in YYYY-MM-DD format
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            // Check if today's data exists and has expense data
+            if (userData[todayStr] && userData[todayStr].dailyExpense !== undefined) {
+                const expense = parseFloat(userData[todayStr].dailyExpense);
+                return !isNaN(expense) && expense > 0;
+            }
+            
+            return false;
+        }
+        
+        // Account Overview Functions
+        function showAccountOverview() {
+            document.getElementById('accountOverviewModal').style.display = 'block';
+            refreshAccountOverview();
+        }
+        
+        function closeAccountOverview() {
+            document.getElementById('accountOverviewModal').style.display = 'none';
+        }
+        
+        function refreshAccountOverview() {
+            const container = document.getElementById('accountOverviewData');
+            container.innerHTML = '<p>加载中...</p>';
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p>暂无用户数据</p>';
+                return;
+            }
+            
+            // Create a container for all account data
+            const accountsContainer = document.createElement('div');
+            accountsContainer.className = 'space-y-4';
+            
+            // Process each user
+            users.forEach(user => {
+                // Create account card
+                const accountCard = document.createElement('div');
+                accountCard.className = 'bg-white p-4 rounded-lg shadow';
+                
+                // Set user name as card header
+                const header = document.createElement('h4');
+                header.className = 'font-bold text-lg mb-2';
+                header.textContent = user.name;
+                accountCard.appendChild(header);
+                
+                // Create grid for account data
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+                
+                // Load user's data
+                const userData = JSON.parse(localStorage.getItem(`accountingData_${user.id}`)) || {};
+                
+                // Calculate account statistics
+                let monthlyProfit = 0;
+                let totalProfit = 0;
+                let totalProjects = 0;
+                let totalExpense = 0;
+                let predictedPoints = 0;
+                
+                // Get current month/year for monthly calculations
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+                
+                // Process all data for this user
+                Object.keys(userData).forEach(dateStr => {
+                    const data = userData[dateStr];
+                    const income = parseFloat(data.dailyIncome) || 0;
+                    const expense = parseFloat(data.dailyExpense) || 0;
+                    const projects = parseInt(data.projectsClaimedToday) || 0;
+                    
+                    // Calculate profit for this day
+                    const dayProfit = income - expense;
+                    
+                    // Add to total statistics
+                    totalProfit += dayProfit;
+                    totalProjects += projects;
+                    totalExpense += expense;
+                    
+                    // Check if this date is in current month for monthly profit
+                    const date = new Date(dateStr);
+                    if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+                        monthlyProfit += dayProfit;
+                    }
+                });
+                
+                // Calculate predicted points for last 15 days
+                const today = new Date();
+                const startDate = new Date(today);
+                startDate.setDate(today.getDate() - 15);
+                
+                Object.keys(userData).forEach(dateStr => {
+                    const date = new Date(dateStr);
+                    
+                    // Check if date is within the last 15 days and before today
+                    if (date >= startDate && date < today) {
+                        const data = userData[dateStr];
+                        const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
+                                            (parseFloat(data.balancePointsToday) || 0) +
+                                            (parseFloat(data.extraPointsToday) || 0);
+                        const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                        
+                        predictedPoints += (earnedPoints - consumedPoints);
+                    }
+                });
+                
+                // Create data items
+                const dataItems = [
+                    { label: '本月利润 (USDT)', value: monthlyProfit.toFixed(2), class: monthlyProfit >= 0 ? 'positive' : 'negative' },
+                    { label: '用户总收益 (USDT)', value: totalProfit.toFixed(2), class: totalProfit >= 0 ? 'positive' : 'negative' },
+                    { label: '领取项目总数', value: totalProjects, class: '' },
+                    { label: '总消耗 (USDT)', value: totalExpense.toFixed(2), class: 'negative' },
+                    { label: '预计明日积分', value: predictedPoints.toFixed(2), class: predictedPoints >= 0 ? 'positive' : 'negative' },
+                    { label: '今日是否刷交易', value: checkTodayTrade(userData) ? '是' : '否', class: checkTodayTrade(userData) ? 'positive' : 'negative' }
+                ];
+                
+                // Add data items to grid
+                dataItems.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'p-2';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'text-gray-500 text-sm';
+                    label.textContent = item.label;
+                    
+                    const value = document.createElement('div');
+                    value.className = `text-lg font-semibold ${item.class}`;
+                    value.textContent = item.value;
+                    
+                    itemDiv.appendChild(label);
+                    itemDiv.appendChild(value);
+                    grid.appendChild(itemDiv);
+                });
+                
+                accountCard.appendChild(grid);
+                accountsContainer.appendChild(accountCard);
+            });
+            
+            // Replace loading message with account data
+            container.innerHTML = '';
+            container.appendChild(accountsContainer);
+        }
     </script>
+    
+    <!-- Account Overview Modal -->
+    <div id="accountOverviewModal" class="modal fade-in">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeAccountOverview()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">账户总览</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-2">各账户数据概览</h3>
+                <div id="accountOverviewData" class="space-y-4">
+                    <!-- Account data will be populated here -->
+                    <p>加载中...</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-end">
+                <button onclick="refreshAccountOverview()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                    刷新数据
+                </button>
+                <button onclick="closeAccountOverview()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
