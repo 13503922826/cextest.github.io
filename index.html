@@ -98,7 +98,7 @@
     <!-- Header -->
     <header class="bg-white shadow-md py-4 px-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">本地记账日历</h1>
+            <h1 class="text-2xl font-bold text-gray-800">币安Alpha记账日历</h1>
         </div>
         <div class="flex items-center space-x-4">
             <!-- User Selector -->
@@ -147,6 +147,22 @@
                 <button onclick="refreshPointsPrediction()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
                     刷新预测
                 </button>
+            </div>
+        </div>
+        
+        <!-- 新增的用户总览统计 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">用户总收益 (USDT)</h3>
+                <p id="totalProfit" class="text-2xl font-bold">0.00</p>
+            </div>
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">领取项目总数</h3>
+                <p id="totalProjects" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">总消耗 (USDT)</h3>
+                <p id="totalExpense" class="text-2xl font-bold">0.00</p>
             </div>
         </div>
     </section>
@@ -749,6 +765,31 @@
             document.getElementById('monthlyProfit').textContent = monthlyProfit.toFixed(2);
             document.getElementById('monthlyProfit').className = 
                 'text-xl font-semibold ' + (monthlyProfit >= 0 ? 'positive' : 'negative');
+            
+            // Calculate user's total statistics
+            let totalProfit = 0;
+            let totalProjects = 0;
+            let totalExpense = 0;
+            
+            // Iterate through all dates in accountingData for total statistics
+            Object.keys(accountingData).forEach(dateStr => {
+                const data = accountingData[dateStr];
+                const income = parseFloat(data.dailyIncome) || 0;
+                const expense = parseFloat(data.dailyExpense) || 0;
+                const projects = parseInt(data.projectsClaimedToday) || 0;
+                
+                // Calculate profit for this day (income - expense)
+                const dayProfit = income - expense;
+                
+                totalProfit += dayProfit;
+                totalProjects += projects;
+                totalExpense += expense;
+            });
+            
+            // Update total statistics DOM elements
+            document.getElementById('totalProfit').textContent = totalProfit.toFixed(2);
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('totalExpense').textContent = totalExpense.toFixed(2);
         }
 
         // Points Prediction Functions
