@@ -1012,6 +1012,10 @@
                 return;
             }
             
+            // Initialize overall statistics
+            let allUsersTotalProfit = 0;
+            let allUsersTotalExpense = 0;
+            
             // Create a container for all account data
             const accountsContainer = document.createElement('div');
             accountsContainer.className = 'space-y-4';
@@ -1069,6 +1073,10 @@
                     }
                 });
                 
+                // Add to overall statistics
+                allUsersTotalProfit += totalProfit;
+                allUsersTotalExpense += totalExpense;
+                
                 // Calculate predicted points for last 15 days
                 const today = new Date();
                 const startDate = new Date(today);
@@ -1124,6 +1132,13 @@
             // Replace loading message with account data
             container.innerHTML = '';
             container.appendChild(accountsContainer);
+            
+            // Update the overview summary statistics
+            document.getElementById('totalUsersCount').textContent = users.length;
+            document.getElementById('allUsersTotalProfit').textContent = allUsersTotalProfit.toFixed(2);
+            document.getElementById('allUsersTotalProfit').className = 
+                'text-2xl font-bold ' + (allUsersTotalProfit >= 0 ? 'text-green-300' : 'text-red-300');
+            document.getElementById('allUsersTotalExpense').textContent = allUsersTotalExpense.toFixed(2);
         }
     </script>
     
@@ -1132,6 +1147,22 @@
         <div class="modal-content" style="max-width: 800px;">
             <span class="close" onclick="closeAccountOverview()">&times;</span>
             <h2 class="text-xl font-bold mb-4">账户总览</h2>
+            
+            <!-- 新增的总览统计栏 -->
+            <div id="overviewSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">当前用户数</h3>
+                    <p id="totalUsersCount" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">所有用户总利润 (USDT)</h3>
+                    <p id="allUsersTotalProfit" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">所有用户总消耗 (USDT)</h3>
+                    <p id="allUsersTotalExpense" class="text-2xl font-bold">0.00</p>
+                </div>
+            </div>
             
             <div class="mb-6">
                 <h3 class="text-lg font-semibold mb-2">各账户数据概览</h3>
