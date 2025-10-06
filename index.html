@@ -625,14 +625,24 @@
                 calendarGrid.appendChild(emptyCell);
             }
             
+            // Get today's date for comparison
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
             // Add cells for each day of the month
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const cellDate = new Date(year, month, day);
                 const dayData = accountingData[dateStr] || {};
                 
                 const dayCell = document.createElement('div');
-                dayCell.classList.add('calendar-day', 'bg-white', 'p-2', 'rounded', 'shadow', 'cursor-pointer', 'h-24', 'flex', 'flex-col');
+                dayCell.classList.add('calendar-day', 'bg-white', 'p-2', 'rounded', 'shadow', 'h-24', 'flex', 'flex-col');
                 dayCell.dataset.date = dateStr;
+                
+                // Highlight current day
+                if (cellDate.getTime() === today.getTime()) {
+                    dayCell.classList.add('border-2', 'border-yellow-400');
+                }
                 
                 // Day number
                 const dayNumber = document.createElement('div');
@@ -675,8 +685,24 @@
                     dayCell.appendChild(consumedElement);
                 }
                 
-                // Click event to open entry modal
-                dayCell.addEventListener('click', () => openEntryModal(dateStr));
+                // Display notes in small font at the bottom right
+                if (dayData.notes) {
+                    const notesElement = document.createElement('div');
+                    notesElement.classList.add('text-xs', 'mt-auto', 'text-right', 'text-gray-500', 'truncate');
+                    notesElement.textContent = dayData.notes;
+                    dayCell.appendChild(notesElement);
+                }
+                
+                // Add click event based on date
+                if (cellDate > today) {
+                    // Future date - show alert
+                    dayCell.classList.add('cursor-not-allowed', 'opacity-50');
+                    dayCell.addEventListener('click', () => alert('时间未到'));
+                } else {
+                    // Today or past date - open entry modal
+                    dayCell.classList.add('cursor-pointer');
+                    dayCell.addEventListener('click', () => openEntryModal(dateStr));
+                }
                 
                 calendarGrid.appendChild(dayCell);
             }
@@ -763,6 +789,7 @@
             let monthlyIncome = 0;
             let monthlyProjects = 0;
             let monthlyProfit = 0;
+            let currentPoints = 0;
             
             // Iterate through all dates in accountingData
             Object.keys(accountingData).forEach(dateStr => {
@@ -780,12 +807,37 @@
                 }
             });
             
+            // Calculate current points for last 16 days (from 16 days ago to yesterday)
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - 16);
+            
+            Object.keys(accountingData).forEach(dateStr => {
+                const date = new Date(dateStr);
+                
+                // Check if date is within the last 16 days (from startDate to yesterday)
+                if (date >= startDate && date <= yesterday) {
+                    const data = accountingData[dateStr];
+                    const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
+                                        (parseFloat(data.balancePointsToday) || 0) +
+                                        (parseFloat(data.extraPointsToday) || 0);
+                    const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                    
+                    currentPoints += (earnedPoints - consumedPoints);
+                }
+            });
+            
             // Update DOM elements
             document.getElementById('monthlyIncome').textContent = monthlyIncome.toFixed(2);
             document.getElementById('monthlyProjects').textContent = monthlyProjects;
             document.getElementById('monthlyProfit').textContent = monthlyProfit.toFixed(2);
             document.getElementById('monthlyProfit').className = 
                 'text-xl font-semibold ' + (monthlyProfit >= 0 ? 'positive' : 'negative');
+            document.getElementById('currentPoints').textContent = currentPoints.toFixed(2);
+            document.getElementById('currentPoints').className = 
+                'text-xl font-semibold ' + (currentPoints >= 0 ? 'positive' : 'negative');
             
             // Calculate user's total statistics
             let totalProfit = 0;
@@ -811,6 +863,9 @@
             document.getElementById('totalProfit').textContent = totalProfit.toFixed(2);
             document.getElementById('totalProjects').textContent = totalProjects;
             document.getElementById('totalExpense').textContent = totalExpense.toFixed(2);
+            document.getElementById('currentPointsTotal').textContent = currentPoints.toFixed(2);
+            document.getElementById('currentPointsTotal').className = 
+                'text-2xl font-bold ' + (currentPoints >= 0 ? 'text-green-300' : 'text-red-300');
         }
 
         // Points Prediction Functions
@@ -848,40 +903,7 @@
         
         // Current Points Functions
         function refreshCurrentPoints() {
-            if (!currentUser) return;
-            
-            // Calculate points for last 16 days (from 16 days ago to yesterday)
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(today.getDate() - 1);
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() - 16);
-            
-            let totalPoints = 0;
-            
-            // Iterate through all dates in accountingData
-            Object.keys(accountingData).forEach(dateStr => {
-                const date = new Date(dateStr);
-                
-                // Check if date is within the last 16 days (from startDate to yesterday)
-                if (date >= startDate && date <= yesterday) {
-                    const data = accountingData[dateStr];
-                    const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
-                                        (parseFloat(data.balancePointsToday) || 0) +
-                                        (parseFloat(data.extraPointsToday) || 0);
-                    const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
-                    
-                    totalPoints += (earnedPoints - consumedPoints);
-                }
-            });
-            
-            // Update DOM elements
-            document.getElementById('currentPoints').textContent = totalPoints.toFixed(2);
-            document.getElementById('currentPoints').className = 
-                'text-xl font-semibold ' + (totalPoints >= 0 ? 'positive' : 'negative');
-            document.getElementById('currentPointsTotal').textContent = totalPoints.toFixed(2);
-            document.getElementById('currentPointsTotal').className = 
-                'text-2xl font-bold ' + (totalPoints >= 0 ? 'text-green-300' : 'text-red-300');
+            // This function is now handled in updateSummary
         }
 
         // Import/Export Functions
@@ -968,15 +990,21 @@
                         renderCalendar(currentYear, currentMonth);
                         refreshPointsPrediction();
                         // Refresh current points
-                        refreshCurrentPoints();
+                        updateSummary();
                         
                         closeImportModal();
                         alert(`数据导入成功！新增${importedUsersCount}个用户，导入${importedDataCount}个用户的数据。`);
                     } 
                     // Check if this is a single user export file (old format)
-                    else if (importedData.user) {
-                        // If it contains user info, add the user
+                    else if (importedData.user || importedData.data) {
+                        // Handle single user data
+                        let userData = {};
+                        let userName = "导入用户";
+                        
+                        // Extract user info if available
                         if (importedData.user) {
+                            userName = importedData.user.name || userName;
+                            
                             // Check if user already exists
                             const existingUser = users.find(u => u.id === importedData.user.id);
                             
@@ -987,18 +1015,36 @@
                             
                             // Switch to imported user
                             currentUser = importedData.user.id;
-                            loadUsers();
+                        } else {
+                            // Create a new user if none exists
+                            if (users.length === 0) {
+                                const newUser = {
+                                    id: 'user_' + Date.now(),
+                                    name: userName
+                                };
+                                users.push(newUser);
+                                localStorage.setItem('accountingUsers', JSON.stringify(users));
+                                currentUser = newUser.id;
+                            } else {
+                                currentUser = users[0].id;
+                            }
                         }
                         
                         // Import data
                         if (importedData.data) {
-                            accountingData = importedData.data;
-                            saveData();
-                            renderCalendar(currentYear, currentMonth);
-                            refreshPointsPrediction();
-                            // Refresh current points
-                            refreshCurrentPoints();
+                            userData = importedData.data;
+                        } else if (importedData.accountingData) {
+                            // Handle alternative format
+                            userData = importedData.accountingData;
                         }
+                        
+                        // Save data for current user
+                        localStorage.setItem(`accountingData_${currentUser}`, JSON.stringify(userData));
+                        loadData();
+                        loadUsers();
+                        renderCalendar(currentYear, currentMonth);
+                        refreshPointsPrediction();
+                        updateSummary();
                         
                         closeImportModal();
                         alert('数据导入成功！');
