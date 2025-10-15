@@ -131,6 +131,28 @@
 
     <!-- Summary Section -->
     <section class="container mx-auto mt-6 px-4">
+        <!-- 新增的用户总览统计 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">用户总收益 (USDT)</h3>
+                <p id="totalProfit" class="text-2xl font-bold">0.00</p>
+            </div>
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">领取项目总数</h3>
+                <p id="totalProjects" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">目前积分</h3>
+                <p id="currentPointsTotal" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-100 text-sm">总消耗 (USDT)</h3>
+                <p id="totalExpense" class="text-2xl font-bold">0.00</p>
+            </div>
+        </div>
+            <div >
+---------------------------
+            </div>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div class="bg-white p-4 rounded-lg shadow">
                 <h3 class="text-gray-500 text-sm">月累计收入 (USDT)</h3>
@@ -156,26 +178,7 @@
                 </button>
             </div>
         </div>
-        
-        <!-- 新增的用户总览统计 -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">用户总收益 (USDT)</h3>
-                <p id="totalProfit" class="text-2xl font-bold">0.00</p>
-            </div>
-            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">领取项目总数</h3>
-                <p id="totalProjects" class="text-2xl font-bold">0</p>
-            </div>
-            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">目前积分</h3>
-                <p id="currentPointsTotal" class="text-2xl font-bold">0</p>
-            </div>
-            <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">总消耗 (USDT)</h3>
-                <p id="totalExpense" class="text-2xl font-bold">0.00</p>
-            </div>
-        </div>
+      
     </section>
 
     <!-- Calendar Navigation -->
@@ -650,6 +653,10 @@
                 dayNumber.textContent = day;
                 dayCell.appendChild(dayNumber);
                 
+                // Create a container for the main content
+                const contentContainer = document.createElement('div');
+                contentContainer.classList.add('flex', 'flex-col', 'flex-grow', 'mt-1');
+                
                 // Income - Expense
                 const income = parseFloat(dayData.dailyIncome) || 0;
                 const expense = parseFloat(dayData.dailyExpense) || 0;
@@ -657,10 +664,10 @@
                 
                 if (profit !== 0) {
                     const profitElement = document.createElement('div');
-                    profitElement.classList.add('text-xs', 'mt-1');
+                    profitElement.classList.add('text-xs');
                     profitElement.textContent = `${profit >= 0 ? '+' : ''}${profit.toFixed(2)} USDT`;
                     profitElement.classList.add(profit >= 0 ? 'positive' : 'negative');
-                    dayCell.appendChild(profitElement);
+                    contentContainer.appendChild(profitElement);
                 }
                 
                 // Points calculation (separate display for earned and consumed)
@@ -669,29 +676,58 @@
                                     (parseFloat(dayData.extraPointsToday) || 0);
                 const consumedPoints = parseFloat(dayData.pointsConsumedToday) || 0;
                 
+                // Create a flex container for points display
+                const pointsContainer = document.createElement('div');
+                pointsContainer.classList.add('flex', 'justify-between');
+                
                 // Display earned points in green
                 if (earnedPoints > 0) {
                     const earnedElement = document.createElement('div');
-                    earnedElement.classList.add('text-xs', 'mt-1', 'positive');
+                    earnedElement.classList.add('text-xs', 'positive');
                     earnedElement.textContent = `+${earnedPoints} 分`;
-                    dayCell.appendChild(earnedElement);
+                    pointsContainer.appendChild(earnedElement);
                 }
                 
                 // Display consumed points in red
                 if (consumedPoints > 0) {
                     const consumedElement = document.createElement('div');
-                    consumedElement.classList.add('text-xs', 'mt-1', 'negative');
+                    consumedElement.classList.add('text-xs', 'negative');
                     consumedElement.textContent = `-${consumedPoints} 分`;
-                    dayCell.appendChild(consumedElement);
+                    pointsContainer.appendChild(consumedElement);
                 }
                 
-                // Display notes in small font at the bottom right
-                if (dayData.notes) {
-                    const notesElement = document.createElement('div');
-                    notesElement.classList.add('text-xs', 'mt-auto', 'text-right', 'text-gray-500', 'truncate');
-                    notesElement.textContent = dayData.notes;
-                    dayCell.appendChild(notesElement);
+                // Only add points container if there are points to display
+                if (earnedPoints > 0 || consumedPoints > 0) {
+                    contentContainer.appendChild(pointsContainer);
                 }
+                
+                // Display notes in small font at the bottom with left-right layout
+                if (dayData.notes) {
+                    // Create a flex container for notes with left and right sections
+                    const notesContainer = document.createElement('div');
+                    notesContainer.classList.add('flex', 'items-center', 'mt-auto', 'text-xs');
+                    
+                    // Left section for "备注" label
+                    const notesLabel = document.createElement('div');
+                    notesLabel.classList.add('text-gray-500', 'font-bold', 'mr-1', 'flex-shrink-0');
+                    notesLabel.textContent = '备注:';
+                    notesContainer.appendChild(notesLabel);
+                    
+                    // Right section for notes content
+                    const notesContent = document.createElement('div');
+                    notesContent.classList.add('text-gray-700', 'truncate');
+                    // Limit the length of displayed notes to prevent overflow
+                    const maxLength = 15;
+                    const notesText = dayData.notes;
+                    notesContent.textContent = notesText.length > maxLength ? notesText.substring(0, maxLength) + '...' : notesText;
+                    notesContent.title = notesText; // Show full text on hover
+                    notesContainer.appendChild(notesContent);
+                    
+                    contentContainer.appendChild(notesContainer);
+                }
+                
+                // Add the content container to the day cell
+                dayCell.appendChild(contentContainer);
                 
                 // Add click event based on date
                 if (cellDate > today) {
