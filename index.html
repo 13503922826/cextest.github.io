@@ -92,6 +92,57 @@
                 max-width: 1140px;
             }
         }
+        
+        /* 新增样式 */
+        .project-item, .tge-item {
+            transition: background-color 0.2s;
+        }
+        
+        .project-item:hover, .tge-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .calendar-day .fa-edit {
+            font-size: 0.8rem;
+        }
+        
+        .calendar-day .fa-edit:hover {
+            transform: scale(1.2);
+        }
+        
+        /* 优化模态框样式 */
+        #entryModal .modal-content {
+            max-width: 900px;
+        }
+        
+        #dayDetailsModal .modal-content {
+            max-width: 700px;
+        }
+        
+        /* 页面切换样式 */
+        .hidden {
+            display: none;
+        }
+        
+        /* 用户详情页面样式 */
+        #userDetailsPage .bg-white {
+            transition: all 0.3s ease;
+        }
+        
+        #userDetailsPage .bg-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 账户总览卡片样式 */
+        #accountOverviewPage .bg-white {
+            transition: all 0.3s ease;
+        }
+        
+        #accountOverviewPage .bg-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -101,118 +152,301 @@
             <h1 class="text-2xl font-bold text-gray-800">币安Alpha记账日历</h1>
         </div>
         <div class="flex items-center space-x-4">
-            <!-- User Selector -->
-            <button onclick="showAccountOverview()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
-                <i class="fas fa-chart-bar"></i> 账户总览
+            <!-- Navigation Buttons -->
+            <button onclick="showMainPage()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
+                <i class="fas fa-calendar"></i> <span class="ml-2">主页面</span>
+            </button>
+            <button onclick="showAccountOverview()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 flex items-center">
+                <i class="fas fa-chart-bar"></i> <span class="ml-2">账户总览</span>
             </button>
             <div class="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2">
                 <i class="fas fa-user text-gray-600"></i>
                 <select id="userSelector" class="bg-transparent border-none focus:ring-0" onchange="switchUser(this.value)">
                     <!-- Users will be populated here -->
                 </select>
-                <button onclick="showEditUserModal()" class="text-gray-600 hover:text-gray-900">
+                <button onclick="showEditUserModal()" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="fas fa-edit text-xl"></i>
+                    <span class="ml-1 hidden md:inline">编辑</span>
                 </button>
-                <button onclick="showDeleteUserModal()" class="text-gray-600 hover:text-gray-900">
+                <button onclick="showDeleteUserModal()" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="fas fa-trash text-xl"></i>
+                    <span class="ml-1 hidden md:inline">删除</span>
                 </button>
-                <button onclick="showAddUserModal()" class="text-gray-600 hover:text-gray-900">
+                <button onclick="showAddUserModal()" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="fas fa-plus-circle text-xl"></i>
+                    <span class="ml-1 hidden md:inline">添加</span>
+                </button>
+                <button onclick="showUserSettings()" class="text-gray-600 hover:text-gray-900 flex items-center">
+                    <i class="fas fa-cog text-xl"></i>
+                    <span class="ml-1 hidden md:inline">设置</span>
                 </button>
             </div>
-            <button onclick="exportData()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                <i class="fas fa-file-export"></i> 导出
+            <button onclick="exportData()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center">
+                <i class="fas fa-file-export"></i> <span class="ml-2">导出</span>
             </button>
-            <button onclick="showImportModal()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
-                <i class="fas fa-file-import"></i> 导入
+            <button onclick="showImportModal()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 flex items-center">
+                <i class="fas fa-file-import"></i> <span class="ml-2">导入</span>
             </button>
         </div>
     </header>
 
     <!-- Summary Section -->
-    <section class="container mx-auto mt-6 px-4">
+    <section id="summarySection" class="container mx-auto mt-6 px-4">
         <!-- 新增的用户总览统计 -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">用户总收益 (USDT)</h3>
+                <h3 class="text-gray-100 text-sm">用户总利润 (U)</h3>
                 <p id="totalProfit" class="text-2xl font-bold">0.00</p>
             </div>
             <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">领取项目总数</h3>
+                <h3 class="text-gray-100 text-sm">Alpha项目总数</h3>
                 <p id="totalProjects" class="text-2xl font-bold">0</p>
             </div>
             <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-lg shadow">
                 <h3 class="text-gray-100 text-sm">目前积分</h3>
-                <p id="currentPointsTotal" class="text-2xl font-bold">0</p>
+                <p id="currentPointsTotal" class="text-2xl font-bold text-yellow-300">0</p>
             </div>
             <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-100 text-sm">总消耗 (USDT)</h3>
+                <h3 class="text-gray-100 text-sm">总消耗 (U)</h3>
                 <p id="totalExpense" class="text-2xl font-bold">0.00</p>
             </div>
         </div>
             <div >
----------------------------
+<br>
             </div>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-500 text-sm">月累计收入 (USDT)</h3>
+                <h3 class="text-gray-500 text-sm">月累计售卖收入 (U)</h3>
                 <p id="monthlyIncome" class="text-xl font-semibold">0.00</p>
             </div>
             <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-500 text-sm">月项目总数</h3>
+                <h3 class="text-gray-500 text-sm">月Alpha项目数</h3>
                 <p id="monthlyProjects" class="text-xl font-semibold">0</p>
             </div>
             <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="text-gray-500 text-sm">月利润 (USDT)</h3>
+                <h3 class="text-gray-500 text-sm">月利润 (U)</h3>
                 <p id="monthlyProfit" class="text-xl font-semibold">0.00</p>
             </div>
             <div class="bg-white p-4 rounded-lg shadow">
                 <h3 class="text-gray-500 text-sm">目前积分</h3>
-                <p id="currentPoints" class="text-xl font-semibold">0</p>
+                <p id="currentPoints" class="text-xl font-semibold text-yellow-600">0</p>
             </div>
             <div class="bg-white p-4 rounded-lg shadow">
                 <h3 class="text-gray-500 text-sm">预计明日积分</h3>
-                <p id="predictedPoints" class="text-xl font-semibold">0</p>
-                <button onclick="refreshPointsPrediction()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
-                    刷新预测
+                <p id="predictedPoints" class="text-xl font-semibold text-yellow-600">0</p>
+                <button onclick="refreshPointsPrediction()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 flex items-center">
+                    <i class="fas fa-sync-alt"></i> <span class="ml-1">刷新预测</span>
                 </button>
             </div>
         </div>
       
     </section>
 
-    <!-- Calendar Navigation -->
-    <section class="container mx-auto mt-6 px-4 flex justify-between items-center">
-        <button onclick="prevMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-            <i class="fas fa-chevron-left"></i> 上月
-        </button>
-        <h2 id="currentMonthYear" class="text-xl font-bold">2025年10月</h2>
-        <button onclick="nextMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-            下月 <i class="fas fa-chevron-right"></i>
-        </button>
-    </section>
+    <!-- Main Content Area -->
+    <div id="mainContent">
+        <!-- Calendar Navigation -->
+        <section class="container mx-auto mt-6 px-4 flex justify-between items-center">
+            <button onclick="prevMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded flex items-center">
+                <i class="fas fa-chevron-left"></i> <span class="ml-2">上月</span>
+            </button>
+            <h2 id="currentMonthYear" class="text-xl font-bold">2025年10月</h2>
+            <button onclick="nextMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded flex items-center">
+                <span class="mr-2">下月</span> <i class="fas fa-chevron-right"></i>
+            </button>
+        </section>
 
-    <!-- Calendar Grid -->
-    <section class="container mx-auto mt-6 px-4">
-        <div class="grid grid-cols-7 gap-1 mb-2">
-            <div class="text-center font-bold py-2">日</div>
-            <div class="text-center font-bold py-2">一</div>
-            <div class="text-center font-bold py-2">二</div>
-            <div class="text-center font-bold py-2">三</div>
-            <div class="text-center font-bold py-2">四</div>
-            <div class="text-center font-bold py-2">五</div>
-            <div class="text-center font-bold py-2">六</div>
-        </div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-1">
-            <!-- Calendar days will be populated here -->
-        </div>
-    </section>
+        <!-- Calendar Grid -->
+        <section class="container mx-auto mt-6 px-4">
+            <div class="grid grid-cols-7 gap-1 mb-2">
+                <div class="text-center font-bold py-2">日</div>
+                <div class="text-center font-bold py-2">一</div>
+                <div class="text-center font-bold py-2">二</div>
+                <div class="text-center font-bold py-2">三</div>
+                <div class="text-center font-bold py-2">四</div>
+                <div class="text-center font-bold py-2">五</div>
+                <div class="text-center font-bold py-2">六</div>
+            </div>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+                <!-- Calendar days will be populated here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Account Overview Page -->
+    <div id="accountOverviewPage" class="hidden">
+        <section class="container mx-auto mt-6 px-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">账户总览</h2>
+                <button onclick="showMainPage()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-arrow-left"></i> <span class="ml-2">返回主页面</span>
+                </button>
+            </div>
+
+            <!-- 总览统计栏 -->
+            <div id="overviewSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">当前用户数</h3>
+                    <p id="totalUsersCount" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">所有用户总利润 (U)</h3>
+                    <p id="allUsersTotalProfit" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">所有用户总消耗 (U)</h3>
+                    <p id="allUsersTotalExpense" class="text-2xl font-bold">0.00</p>
+                </div>
+            </div>
+
+            <!-- 各账户数据概览 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-4">各账户数据概览</h3>
+                <div id="accountOverviewData" class="space-y-4">
+                    <!-- Account data will be populated here -->
+                    <p class="text-gray-500">加载中...</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end">
+                <button onclick="refreshAccountOverview()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                    刷新数据
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- User Details Page -->
+    <div id="userDetailsPage" class="hidden">
+        <section class="container mx-auto mt-6 px-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">用户详情 - <span id="userDetailsName"></span></h2>
+                <div class="flex space-x-2">
+                    <button onclick="showAccountOverview()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center">
+                        <i class="fas fa-arrow-left"></i> <span class="ml-2">返回账户总览</span>
+                    </button>
+                    <button onclick="showMainPage()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                        <i class="fas fa-home"></i> <span class="ml-2">返回主页面</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 用户基本信息 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">用户总利润 (U)</h3>
+                    <p id="userTotalProfit" class="text-2xl font-bold">0.00</p>
+                </div>
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">Alpha项目总数</h3>
+                    <p id="userTotalProjects" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">目前积分</h3>
+                    <p id="userCurrentPoints" class="text-2xl font-bold text-yellow-300">0</p>
+                </div>
+                <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-100 text-sm">总消耗 (U)</h3>
+                    <p id="userTotalExpense" class="text-2xl font-bold">0.00</p>
+                </div>
+            </div>
+
+            <!-- 交易磨损总数据 -->
+            <div class="bg-white p-6 rounded-lg shadow mb-6">
+                <h3 class="text-lg font-semibold mb-4">交易磨损总数据</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="userTotalTrades">0</div>
+                        <div class="text-gray-500 text-sm">总交易天数</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-red-600" id="userTotalWear">0.00</div>
+                        <div class="text-gray-500 text-sm">总磨损金额 (U)</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600" id="userAvgDailyWear">0.00</div>
+                        <div class="text-gray-500 text-sm">日均磨损 (U)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细项目列表 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 空投项目版块 -->
+                <div class="space-y-6">
+                    <!-- 空投项目统计 -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4">空投项目统计</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-purple-600" id="userAirdropCount">0</div>
+                                <div class="text-gray-500 text-sm">Alpha项目总数</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-green-600" id="userAirdropIncome">0.00</div>
+                                <div class="text-gray-500 text-sm">空投总售出 (USDT)</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-blue-600" id="userAirdropPoints">0</div>
+                                <div class="text-gray-500 text-sm">空投消耗积分</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-orange-600" id="userAvgAirdropIncome">0.00</div>
+                                <div class="text-gray-500 text-sm">平均项目收入 (USDT)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 空投项目列表 -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4">空投项目详情</h3>
+                        <div id="userAirdropList" class="space-y-3 max-h-96 overflow-y-auto">
+                            <p class="text-gray-500">暂无空投项目数据</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TGE项目版块 -->
+                <div class="space-y-6">
+                    <!-- TGE项目统计 -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4">TGE项目统计</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-indigo-600" id="userTgeCount">0</div>
+                                <div class="text-gray-500 text-sm">TGE项目总数</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-green-600" id="userTgeIncome">0.00</div>
+                                <div class="text-gray-500 text-sm">TGE总售出 (USDT)</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-blue-600" id="userTgePoints">0</div>
+                                <div class="text-gray-500 text-sm">TGE消耗积分</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-red-600" id="userTgeCost">0.00</div>
+                                <div class="text-gray-500 text-sm">TGE总成本 (USDT)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TGE项目列表 -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4">TGE项目详情</h3>
+                        <div id="userTgeList" class="space-y-3 max-h-96 overflow-y-auto">
+                            <p class="text-gray-500">暂无TGE项目数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
     <!-- Entry Modal -->
     <div id="entryModal" class="modal fade-in">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 900px;">
             <span class="close" onclick="closeEntryModal()">&times;</span>
-            <h2 class="text-xl font-bold mb-4">编辑记账条目</h2>
+            <h2 class="text-xl font-bold mb-4">编辑记账条目 - <span id="modalDateDisplay"></span></h2>
             <form id="entryForm">
                 <input type="hidden" id="entryDate">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -259,31 +493,60 @@
                         </label>
                         <input type="number" step="any" id="extraPointsToday" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="pointsConsumedToday">
-                            今日消耗积分
-                        </label>
-                        <input type="number" step="any" id="pointsConsumedToday" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="projectsClaimedToday">
-                            今日领取项目数
-                        </label>
-                        <input type="number" id="projectsClaimedToday" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    </div>
+                    
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="dailyExpense">
-                            今日支出 (USDT)
+                            今日磨损 (USDT)
                         </label>
                         <input type="number" step="0.01" id="dailyExpense" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="dailyIncome">
-                            今日收入 (USDT)
+                            今日售卖收入 (USDT)
                         </label>
                         <input type="number" step="0.01" id="dailyIncome" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                 </div>
+
+                <!-- 领取项目数模块 -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-semibold">空投项目</h3>
+                        <button type="button" onclick="addProjectItem()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm">
+                            <i class="fas fa-plus"></i> 添加项目
+                        </button>
+                    </div>
+                    <div id="projectsContainer" class="border rounded p-3">
+                        <!-- 项目条目将在这里动态添加 -->
+                    </div>
+                </div>
+
+                <!-- TGE项目模块 -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-semibold">TGE项目</h3>
+                        <button type="button" onclick="addTgeItem()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                            <i class="fas fa-plus"></i> 添加项目
+                        </button>
+                    </div>
+                    <div id="tgeContainer" class="border rounded p-3">
+                        <!-- TGE项目条目将在这里动态添加 -->
+                    </div>
+                </div>
+
+                <!-- 以往项目操作模块 -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-semibold">以往项目操作</h3>
+                        <button type="button" onclick="addPreviousProjectItem()" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded text-sm">
+                            <i class="fas fa-plus"></i> 添加项目
+                        </button>
+                    </div>
+                    <div id="previousProjectsContainer" class="border rounded p-3">
+                        <!-- 以往项目条目将在这里动态添加 -->
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="notes">
                         备注
@@ -318,6 +581,41 @@
                         用户名
                     </label>
                     <input type="text" id="newUserName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="newUserBalance">
+                        账户余额设置
+                    </label>
+                    <select id="newUserBalance" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">请选择余额级别</option>
+                        <option value="100">100 U</option>
+                        <option value="1000">1000 U</option>
+                        <option value="10000">10000 U</option>
+                        <option value="100000">100000 U</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="newUserTradePoints">
+                        交易积分设置
+                    </label>
+                    <select id="newUserTradePoints" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">请选择交易积分挡位</option>
+                        <option value="6">64 USDT (6分)</option>
+                        <option value="7">128 USDT (7分)</option>
+                        <option value="8">256 USDT (8分)</option>
+                        <option value="9">512 USDT (9分)</option>
+                        <option value="10">1024 USDT (10分)</option>
+                        <option value="11">2048 USDT (11分)</option>
+                        <option value="12">4096 USDT (12分)</option>
+                        <option value="13">8192 USDT (13分)</option>
+                        <option value="14">16384 USDT (14分)</option>
+                        <option value="15">32768 USDT (15分)</option>
+                        <option value="16">65536 USDT (16分)</option>
+                        <option value="17">131072 USDT (17分)</option>
+                        <option value="18">262144 USDT (18分)</option>
+                        <option value="19">524288 USDT (19分)</option>
+                        <option value="20">1048576 USDT (20分)</option>
+                    </select>
                 </div>
                 <div class="flex items-center justify-end">
                     <button type="button" onclick="closeAddUserModal()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
@@ -404,31 +702,44 @@
         let users = JSON.parse(localStorage.getItem('accountingUsers')) || [];
         let accountingData = {};
 
+        // Global error handler
+        window.addEventListener('error', function(event) {
+            console.error('Global error caught:', event.error);
+            // You can add user-friendly error display here if needed
+        });
+
         // Initialize the app
         window.onload = function() {
-            // Load users
-            loadUsers();
-            
-            // Set current user if none selected
-            if (!currentUser && users.length > 0) {
-                currentUser = users[0].id;
+            try {
+                // Load users
+                loadUsers();
+                
+                // Set current user if none selected
+                if (!currentUser && users.length > 0) {
+                    currentUser = users[0].id;
+                }
+                
+                // Load data for current user
+                loadData();
+                
+                // Render calendar
+                renderCalendar(currentYear, currentMonth);
+                
+                // Refresh points prediction
+                refreshPointsPrediction();
+                // Refresh current points
+                refreshCurrentPoints();
+                
+                // Setup form submission handlers
+                document.getElementById('entryForm').addEventListener('submit', saveEntry);
+                document.getElementById('addUserForm').addEventListener('submit', addUser);
+                document.getElementById('editUserForm').addEventListener('submit', editUser);
+                
+                // Show main page by default
+                showMainPage();
+            } catch (error) {
+                console.error('Error during app initialization:', error);
             }
-            
-            // Load data for current user
-            loadData();
-            
-            // Render calendar
-            renderCalendar(currentYear, currentMonth);
-            
-            // Refresh points prediction
-            refreshPointsPrediction();
-            // Refresh current points
-            refreshCurrentPoints();
-            
-            // Setup form submission handlers
-            document.getElementById('entryForm').addEventListener('submit', saveEntry);
-            document.getElementById('addUserForm').addEventListener('submit', addUser);
-            document.getElementById('editUserForm').addEventListener('submit', editUser);
         };
 
         // User Management Functions
@@ -446,6 +757,147 @@
             // Select current user
             if (currentUser) {
                 selector.value = currentUser;
+            }
+        }
+
+        // 用户设置相关函数
+        function showUserSettings() {
+            if (!currentUser) return;
+            
+            const user = users.find(u => u.id === currentUser);
+            if (user) {
+                // 创建设置模态框
+                createSettingsModal(user);
+                document.getElementById('settingsModal').style.display = 'block';
+            }
+        }
+
+        function createSettingsModal(user) {
+            // 如果模态框已存在，先移除
+            const existingModal = document.getElementById('settingsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.id = 'settingsModal';
+            modal.className = 'modal fade-in';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <span class="close" onclick="closeSettingsModal()">&times;</span>
+                    <h2 class="text-xl font-bold mb-4">用户设置 - ${user.name}</h2>
+                    <form id="settingsForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="userBalance">
+                                账户余额设置
+                            </label>
+                            <select id="userBalance" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="">请选择余额级别</option>
+                                <option value="100">100 U</option>
+                                <option value="1000">1000 U</option>
+                                <option value="10000">10000 U</option>
+                                <option value="100000">100000 U</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="tradePoints">
+                                交易积分设置
+                            </label>
+                            <select id="tradePoints" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="">请选择交易积分挡位</option>
+                                <option value="6">64 USDT (6分)</option>
+                                <option value="7">128 USDT (7分)</option>
+                                <option value="8">256 USDT (8分)</option>
+                                <option value="9">512 USDT (9分)</option>
+                                <option value="10">1024 USDT (10分)</option>
+                                <option value="11">2048 USDT (11分)</option>
+                                <option value="12">4096 USDT (12分)</option>
+                                <option value="13">8192 USDT (13分)</option>
+                                <option value="14">16384 USDT (14分)</option>
+                                <option value="15">32768 USDT (15分)</option>
+                                <option value="16">65536 USDT (16分)</option>
+                                <option value="17">131072 USDT (17分)</option>
+                                <option value="18">262144 USDT (18分)</option>
+                                <option value="19">524288 USDT (19分)</option>
+                                <option value="20">1048576 USDT (20分)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <button type="button" onclick="closeSettingsModal()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                                取消
+                            </button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                保存设置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 填充现有设置
+            const userData = accountingData;
+            if (userData.settings) {
+                document.getElementById('userBalance').value = userData.settings.balance || '';
+                document.getElementById('tradePoints').value = userData.settings.tradePoints || '';
+            }
+            
+            // 添加表单提交事件
+            document.getElementById('settingsForm').addEventListener('submit', saveUserSettings);
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function saveUserSettings(e) {
+            e.preventDefault();
+            
+            if (!currentUser) return;
+            
+            const balance = document.getElementById('userBalance').value;
+            const tradePoints = document.getElementById('tradePoints').value;
+            
+            // 保存设置到用户数据中
+            if (!accountingData.settings) {
+                accountingData.settings = {};
+            }
+            
+            accountingData.settings.balance = balance;
+            accountingData.settings.tradePoints = tradePoints;
+            
+            saveData();
+            closeSettingsModal();
+            
+            // 如果在编辑模态框中打开了今日余额获取积分或今日交易获取积分的选择框，自动选择对应挡位
+            const entryModal = document.getElementById('entryModal');
+            if (entryModal && entryModal.style.display === 'block') {
+                // 自动选择余额挡位
+                if (balance) {
+                    const balancePointsSelect = document.getElementById('balancePointsToday');
+                    if (balancePointsSelect) {
+                        // 根据余额选择对应的积分挡位
+                        let balanceValue = 1; // 默认100 U对应1分
+                        if (balance == "1000") balanceValue = 2;
+                        else if (balance == "10000") balanceValue = 3;
+                        else if (balance == "100000") balanceValue = 4;
+                        
+                        balancePointsSelect.value = balanceValue;
+                    }
+                }
+                
+                // 自动选择交易积分挡位
+                if (tradePoints) {
+                    const tradePointsSelect = document.getElementById('pointsEarnedToday');
+                    if (tradePointsSelect) {
+                        tradePointsSelect.value = tradePoints;
+                    }
+                }
             }
         }
 
@@ -512,6 +964,23 @@
                 
                 users.push(newUser);
                 localStorage.setItem('accountingUsers', JSON.stringify(users));
+                
+                // 保存用户设置
+                const balance = document.getElementById('newUserBalance').value;
+                const tradePoints = document.getElementById('newUserTradePoints').value;
+                
+                if (balance || tradePoints) {
+                    const newUserSettings = {};
+                    if (balance) newUserSettings.balance = balance;
+                    if (tradePoints) newUserSettings.tradePoints = tradePoints;
+                    
+                    // 为新用户创建数据存储
+                    const newUserAccountingData = {
+                        settings: newUserSettings
+                    };
+                    
+                    localStorage.setItem(`accountingData_${newUser.id}`, JSON.stringify(newUserAccountingData));
+                }
                 
                 // Switch to new user
                 currentUser = newUser.id;
@@ -638,20 +1107,48 @@
                 const cellDate = new Date(year, month, day);
                 const dayData = accountingData[dateStr] || {};
                 
+                // Project count
+                const projectCount = (dayData.projects || []).length;
+                const tgeCount = (dayData.tgeItems || []).length;
+                const previousCount = (dayData.previousItems || []).length;
+                
                 const dayCell = document.createElement('div');
-                dayCell.classList.add('calendar-day', 'bg-white', 'p-2', 'rounded', 'shadow', 'h-24', 'flex', 'flex-col');
+                dayCell.classList.add('calendar-day', 'bg-white', 'p-2', 'rounded', 'shadow', 'h-24', 'flex', 'flex-col', 'relative');
                 dayCell.dataset.date = dateStr;
+                
+                // 如果有项目操作，添加背景颜色提醒
+                if (projectCount > 0 || tgeCount > 0 || previousCount > 0) {
+                    dayCell.classList.add('bg-blue-50', 'border', 'border-blue-200');
+                }
                 
                 // Highlight current day
                 if (cellDate.getTime() === today.getTime()) {
                     dayCell.classList.add('border-2', 'border-yellow-400');
                 }
                 
+                // Day number and edit icon container
+                const headerContainer = document.createElement('div');
+                headerContainer.classList.add('flex', 'justify-between', 'items-start');
+                
                 // Day number
                 const dayNumber = document.createElement('div');
                 dayNumber.classList.add('font-bold', 'text-gray-700');
                 dayNumber.textContent = day;
-                dayCell.appendChild(dayNumber);
+                headerContainer.appendChild(dayNumber);
+                
+                // Edit icon (only for today or past dates)
+                if (cellDate <= today) {
+                    const editIcon = document.createElement('div');
+                    editIcon.classList.add('text-gray-400', 'hover:text-gray-600', 'cursor-pointer', 'text-xs', 'edit-icon');
+                    editIcon.innerHTML = '<i class="fas fa-edit"></i>';
+                    editIcon.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openEntryModal(dateStr);
+                    });
+                    headerContainer.appendChild(editIcon);
+                }
+                
+                dayCell.appendChild(headerContainer);
                 
                 // Create a container for the main content
                 const contentContainer = document.createElement('div');
@@ -665,7 +1162,7 @@
                 if (profit !== 0) {
                     const profitElement = document.createElement('div');
                     profitElement.classList.add('text-xs');
-                    profitElement.textContent = `${profit >= 0 ? '+' : ''}${profit.toFixed(2)} USDT`;
+                    profitElement.textContent = `${profit >= 0 ? '+' : ''}${profit.toFixed(2)} U`;
                     profitElement.classList.add(profit >= 0 ? 'positive' : 'negative');
                     contentContainer.appendChild(profitElement);
                 }
@@ -676,7 +1173,7 @@
                                     (parseFloat(dayData.extraPointsToday) || 0);
                 const consumedPoints = parseFloat(dayData.pointsConsumedToday) || 0;
                 
-                // Create a flex container for points display
+                // Create a flex container for points and project display
                 const pointsContainer = document.createElement('div');
                 pointsContainer.classList.add('flex', 'justify-between');
                 
@@ -688,6 +1185,18 @@
                     pointsContainer.appendChild(earnedElement);
                 }
                 
+                // Display project counts
+                if (projectCount > 0 || tgeCount > 0 || previousCount > 0) {
+                    const projectElement = document.createElement('div');
+                    projectElement.classList.add('text-xs', 'text-blue-500');
+                    let projectText = '';
+                    if (projectCount > 0) projectText += `A:${projectCount} `;
+                    if (tgeCount > 0) projectText += `T:${tgeCount} `;
+                    if (previousCount > 0) projectText += `P:${previousCount}`;
+                    projectElement.textContent = projectText.trim();
+                    pointsContainer.appendChild(projectElement);
+                }
+                
                 // Display consumed points in red
                 if (consumedPoints > 0) {
                     const consumedElement = document.createElement('div');
@@ -696,8 +1205,8 @@
                     pointsContainer.appendChild(consumedElement);
                 }
                 
-                // Only add points container if there are points to display
-                if (earnedPoints > 0 || consumedPoints > 0) {
+                // Only add points container if there are points or projects to display
+                if (earnedPoints > 0 || consumedPoints > 0 || projectCount > 0 || tgeCount > 0) {
                     contentContainer.appendChild(pointsContainer);
                 }
                 
@@ -729,15 +1238,14 @@
                 // Add the content container to the day cell
                 dayCell.appendChild(contentContainer);
                 
-                // Add click event based on date
+                // Add click event to show day details (only for today or past dates)
                 if (cellDate > today) {
                     // Future date - show alert
                     dayCell.classList.add('cursor-not-allowed', 'opacity-50');
-                    dayCell.addEventListener('click', () => alert('时间未到'));
                 } else {
-                    // Today or past date - open entry modal
+                    // Today or past date - show day details
                     dayCell.classList.add('cursor-pointer');
-                    dayCell.addEventListener('click', () => openEntryModal(dateStr));
+                    dayCell.addEventListener('click', () => showDayDetails(dateStr));
                 }
                 
                 calendarGrid.appendChild(dayCell);
@@ -752,16 +1260,325 @@
             const dayData = accountingData[dateStr] || {};
             
             document.getElementById('entryDate').value = dateStr;
+            document.getElementById('modalDateDisplay').textContent = formatDateDisplay(dateStr);
             document.getElementById('pointsEarnedToday').value = dayData.pointsEarnedToday || '';
             document.getElementById('balancePointsToday').value = dayData.balancePointsToday || '';
             document.getElementById('extraPointsToday').value = dayData.extraPointsToday || '';
-            document.getElementById('pointsConsumedToday').value = dayData.pointsConsumedToday || '';
-            document.getElementById('projectsClaimedToday').value = dayData.projectsClaimedToday || '';
-            document.getElementById('dailyExpense').value = dayData.dailyExpense || '';
+            // 显示原始磨损值，而不是包含TGE成本的总磨损
+            document.getElementById('dailyExpense').value = dayData.originalDailyExpense || dayData.dailyExpense || '';
             document.getElementById('dailyIncome').value = dayData.dailyIncome || '';
             document.getElementById('notes').value = dayData.notes || '';
             
+            // 清空项目容器
+            document.getElementById('projectsContainer').innerHTML = '';
+            document.getElementById('tgeContainer').innerHTML = '';
+            
+            // 加载空投项目
+            const projects = dayData.projects || [];
+            projects.forEach((project, index) => {
+                addProjectItem(project);
+            });
+            
+            // 加载TGE项目
+            const tgeItems = dayData.tgeItems || [];
+            tgeItems.forEach((tgeItem, index) => {
+                addTgeItem(tgeItem);
+            });
+            
+            // 清空以往项目容器，避免显示上一次编辑的内容
+            document.getElementById('previousProjectsContainer').innerHTML = '';
+            
+            // 清空以往项目容器，避免显示上一次编辑的内容
+            document.getElementById('previousProjectsContainer').innerHTML = '';
+            
+            // 加载以往项目（如果有的话）
+            const previousItems = dayData.previousItems || [];
+            // 只有在有以往项目数据时才加载，避免默认添加
+            if (previousItems.length > 0) {
+                previousItems.forEach((previousItem, index) => {
+                    addPreviousProjectItem(previousItem);
+                });
+            }
+            
             document.getElementById('entryModal').style.display = 'block';
+            
+            // 更新总收入显示
+            updateTotalIncome();
+            
+            // 自动选择余额和交易积分挡位（如果用户已设置）
+            if (accountingData.settings) {
+                // 自动选择余额挡位
+                if (accountingData.settings.balance) {
+                    const balancePointsSelect = document.getElementById('balancePointsToday');
+                    if (balancePointsSelect) {
+                        // 根据余额选择对应的积分挡位
+                        let balanceValue = 1; // 默认100 U对应1分
+                        if (accountingData.settings.balance == "1000") balanceValue = 2;
+                        else if (accountingData.settings.balance == "10000") balanceValue = 3;
+                        else if (accountingData.settings.balance == "100000") balanceValue = 4;
+                        
+                        balancePointsSelect.value = balanceValue;
+                    }
+                }
+                
+                // 自动选择交易积分挡位
+                if (accountingData.settings.tradePoints) {
+                    const tradePointsSelect = document.getElementById('pointsEarnedToday');
+                    if (tradePointsSelect) {
+                        tradePointsSelect.value = accountingData.settings.tradePoints;
+                    }
+                }
+            }
+        }
+
+        function formatDateDisplay(dateStr) {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${year}年${month}月${day}日`;
+        }
+
+        // 空投项目功能
+        function addProjectItem(projectData = null) {
+            const container = document.getElementById('projectsContainer');
+            const index = container.children.length;
+            
+            const projectDiv = document.createElement('div');
+            projectDiv.className = 'project-item mb-3 p-3 border rounded bg-gray-50';
+            projectDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium">项目 ${index + 1}</h4>
+                    <button type="button" onclick="removeProjectItem(this)" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="projectTokenName_${index}">代币名称</label>
+                        <input type="text" id="projectTokenName_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm"
+                               value="${projectData?.tokenName || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="projectTokenAmount_${index}">代币数量</label>
+                        <input type="number" id="projectTokenAmount_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm"
+                               value="${projectData?.tokenAmount || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="projectIncome_${index}">售卖收入</label>
+                        <input type="number" step="0.01" id="projectIncome_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm project-income"
+                               value="${projectData?.income || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="projectPoints_${index}">消耗积分</label>
+                        <input type="number" step="any" id="projectPoints_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm project-points"
+                               value="${projectData?.points || '15'}">
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(projectDiv);
+            
+            // 添加事件监听器，实时更新总收入
+            const incomeInput = document.getElementById(`projectIncome_${index}`);
+            if (incomeInput) {
+                incomeInput.addEventListener('input', updateTotalIncome);
+            }
+        }
+
+        function removeProjectItem(button) {
+            button.closest('.project-item').remove();
+        }
+
+        // TGE项目功能
+        function addTgeItem(tgeData = null) {
+            const container = document.getElementById('tgeContainer');
+            const index = container.children.length;
+            
+            const tgeDiv = document.createElement('div');
+            tgeDiv.className = 'tge-item mb-3 p-3 border rounded bg-gray-50';
+            tgeDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium">TGE项目 ${index + 1}</h4>
+                    <button type="button" onclick="removeTgeItem(this)" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="tgeTokenName_${index}">代币名称</label>
+                        <input type="text" id="tgeTokenName_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm"
+                               value="${tgeData?.tokenName || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="tgeTokenAmount_${index}">领取数量</label>
+                        <input type="number" id="tgeTokenAmount_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm"
+                               value="${tgeData?.tokenAmount || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="tgeIncome_${index}">售卖收入</label>
+                        <input type="number" step="0.01" id="tgeIncome_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm tge-income"
+                               value="${tgeData?.income || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="tgePoints_${index}">消耗积分</label>
+                        <input type="number" step="any" id="tgePoints_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm tge-points"
+                               value="${tgeData?.points || '15'}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="tgeCost_${index}">消耗成本</label>
+                        <input type="number" step="0.01" id="tgeCost_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm tge-cost"
+                               value="${tgeData?.cost || ''}">
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(tgeDiv);
+            
+            // 添加事件监听器，实时更新总收入
+            const incomeInput = document.getElementById(`tgeIncome_${index}`);
+            if (incomeInput) {
+                incomeInput.addEventListener('input', updateTotalIncome);
+            }
+        }
+
+        function removeTgeItem(button) {
+            button.closest('.tge-item').remove();
+            // 移除项目后更新总收入
+            updateTotalIncome();
+        }
+
+        // 以往项目操作功能
+        function addPreviousProjectItem(previousData = null) {
+            const container = document.getElementById('previousProjectsContainer');
+            const index = container.children.length;
+            
+            // 获取当前用户的历史代币名称
+            const tokenNames = getHistoricalTokenNames();
+            
+            const previousDiv = document.createElement('div');
+            previousDiv.className = 'previous-item mb-3 p-3 border rounded bg-gray-50';
+            previousDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium">以往项目 ${index + 1}</h4>
+                    <button type="button" onclick="removePreviousProjectItem(this)" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="previousTokenName_${index}">代币名称</label>
+                        <select id="previousTokenName_${index}" 
+                                class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm">
+                            <option value="">请选择代币</option>
+                            ${tokenNames.map(name => `<option value="${name}" ${previousData?.tokenName === name ? 'selected' : ''}>${name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="previousType_${index}">项目类型</label>
+                        <select id="previousType_${index}" 
+                                class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm">
+                            <option value="airdrop" ${previousData?.type === 'tge' ? '' : 'selected'}>空投项目</option>
+                            <option value="tge" ${previousData?.type === 'tge' ? 'selected' : ''}>TGE项目</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="previousIncome_${index}">售卖收入</label>
+                        <input type="number" step="0.01" id="previousIncome_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm previous-income"
+                               value="${previousData?.income || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs mb-1" for="previousDate_${index}">操作日期</label>
+                        <input type="date" id="previousDate_${index}" 
+                               class="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm"
+                               value="${previousData?.date || getTodayDate()}">
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(previousDiv);
+            
+            // 添加事件监听器，实时更新总收入
+            const incomeInput = document.getElementById(`previousIncome_${index}`);
+            if (incomeInput) {
+                incomeInput.addEventListener('input', updateTotalIncome);
+            }
+        }
+
+        function removePreviousProjectItem(button) {
+            button.closest('.previous-item').remove();
+            // 移除项目后更新总收入
+            updateTotalIncome();
+        }
+
+        // 获取历史代币名称
+        function getHistoricalTokenNames() {
+            if (!currentUser) return [];
+            
+            const userData = accountingData;
+            const tokenNames = new Set();
+            
+            // 收集所有空投项目的代币名称
+            Object.keys(userData).forEach(dateStr => {
+                const data = userData[dateStr];
+                if (data.projects) {
+                    data.projects.forEach(project => {
+                        if (project.tokenName) {
+                            tokenNames.add(project.tokenName);
+                        }
+                    });
+                }
+                if (data.tgeItems) {
+                    data.tgeItems.forEach(tgeItem => {
+                        if (tgeItem.tokenName) {
+                            tokenNames.add(tgeItem.tokenName);
+                        }
+                    });
+                }
+            });
+            
+            return Array.from(tokenNames).sort();
+        }
+
+        // 实时更新总收入函数
+        function updateTotalIncome() {
+            // 计算空投项目总收入
+            let totalProjectIncome = 0;
+            const projectItems = document.querySelectorAll('.project-item');
+            projectItems.forEach((item, index) => {
+                const income = document.getElementById(`projectIncome_${index}`)?.value || 0;
+                totalProjectIncome += parseFloat(income) || 0;
+            });
+            
+            // 计算TGE项目总收入
+            let totalTgeIncome = 0;
+            const tgeItems = document.querySelectorAll('.tge-item');
+            tgeItems.forEach((item, index) => {
+                const income = document.getElementById(`tgeIncome_${index}`)?.value || 0;
+                totalTgeIncome += parseFloat(income) || 0;
+            });
+            
+            // 计算以往项目总收入
+            let totalPreviousIncome = 0;
+            const previousItems = document.querySelectorAll('.previous-item');
+            previousItems.forEach((item, index) => {
+                const income = document.getElementById(`previousIncome_${index}`)?.value || 0;
+                totalPreviousIncome += parseFloat(income) || 0;
+            });
+            
+            // 更新今日售卖收入字段
+            const totalIncome = totalProjectIncome + totalTgeIncome + totalPreviousIncome;
+            document.getElementById('dailyIncome').value = totalIncome.toFixed(2);
         }
 
         function closeEntryModal() {
@@ -774,33 +1591,148 @@
             
             if (!dateStr) return;
             
+            // 收集空投项目数据
+            const projects = [];
+            const projectItems = document.querySelectorAll('.project-item');
+            let totalProjectIncome = 0;
+            let totalProjectPoints = 0; // 空投项目消耗积分统计
+            let projectCount = 0; // 空投项目数量统计
+            
+            projectItems.forEach((item, index) => {
+                const tokenName = document.getElementById(`projectTokenName_${index}`).value;
+                const tokenAmount = document.getElementById(`projectTokenAmount_${index}`).value;
+                const income = document.getElementById(`projectIncome_${index}`).value;
+                const points = document.getElementById(`projectPoints_${index}`).value;
+                
+                if (tokenName || tokenAmount || income || points) {
+                    projects.push({
+                        tokenName,
+                        tokenAmount,
+                        income,
+                        points
+                    });
+                    
+                    // 累计售卖收入到今日收入
+                    totalProjectIncome += parseFloat(income) || 0;
+                    
+                    // 累计空投项目消耗积分
+                    totalProjectPoints += parseFloat(points) || 0;
+                    
+                    // 计入项目数量
+                    projectCount++;
+                }
+            });
+            
+            // 收集TGE项目数据
+            const tgeItems = [];
+            const tgeItemsElements = document.querySelectorAll('.tge-item');
+            let totalTgeIncome = 0; // TGE项目售卖收入
+            let totalTgeCost = 0;
+            let totalTgePoints = 0; // TGE项目消耗积分统计
+            let tgeCount = 0; // TGE项目数量统计
+            
+            tgeItemsElements.forEach((item, index) => {
+                const tokenName = document.getElementById(`tgeTokenName_${index}`).value;
+                const tokenAmount = document.getElementById(`tgeTokenAmount_${index}`).value;
+                const income = document.getElementById(`tgeIncome_${index}`).value;
+                const points = document.getElementById(`tgePoints_${index}`).value;
+                const cost = document.getElementById(`tgeCost_${index}`).value;
+                
+                if (tokenName || tokenAmount || income || points || cost) {
+                    tgeItems.push({
+                        tokenName,
+                        tokenAmount,
+                        income,
+                        points,
+                        cost
+                    });
+                    
+                    // 累计售卖收入到今日收入
+                    totalTgeIncome += parseFloat(income) || 0;
+                    
+                    // 累计消耗成本到今日支出
+                    totalTgeCost += parseFloat(cost) || 0;
+                    
+                    // 累计TGE项目消耗积分
+                    totalTgePoints += parseFloat(points) || 0;
+                    
+                    // 计入项目数量
+                    tgeCount++;
+                }
+            });
+            
+            // 计算总消耗积分
+            const pointsConsumedToday = totalProjectPoints + totalTgePoints;
+            
+            // 收集以往项目数据
+            const previousItems = [];
+            const previousItemsElements = document.querySelectorAll('.previous-item');
+            let totalPreviousIncome = 0; // 以往项目售卖收入
+            
+            previousItemsElements.forEach((item, index) => {
+                const tokenName = document.getElementById(`previousTokenName_${index}`).value;
+                const type = document.getElementById(`previousType_${index}`).value;
+                const income = document.getElementById(`previousIncome_${index}`).value;
+                const date = document.getElementById(`previousDate_${index}`).value;
+                
+                if (tokenName && income) {
+                    previousItems.push({
+                        tokenName,
+                        type: type || 'airdrop', // 默认为空投项目
+                        income,
+                        date
+                    });
+                    
+                    // 累计售卖收入到今日收入
+                    totalPreviousIncome += parseFloat(income) || 0;
+                }
+            });
+            
             // Collect form data
             const formData = {
                 pointsEarnedToday: document.getElementById('pointsEarnedToday').value,
                 balancePointsToday: document.getElementById('balancePointsToday').value,
                 extraPointsToday: document.getElementById('extraPointsToday').value,
-                pointsConsumedToday: document.getElementById('pointsConsumedToday').value,
-                projectsClaimedToday: document.getElementById('projectsClaimedToday').value,
+                pointsConsumedToday: pointsConsumedToday.toFixed(2),
+                projectsClaimedToday: projectCount + tgeCount, // 计算总项目数
                 dailyExpense: document.getElementById('dailyExpense').value,
                 dailyIncome: document.getElementById('dailyIncome').value,
                 notes: document.getElementById('notes').value
             };
             
-            // Save to accountingData
+            // 更新今日收入和支出
+            const currentDailyExpense = parseFloat(formData.dailyExpense) || 0;
+            
+            // 每日收入 = 空投项目售卖收入 + TGE项目售卖收入 + 以往项目收入（不再与原始收入叠加）
+            formData.dailyIncome = (totalProjectIncome + totalTgeIncome + totalPreviousIncome).toFixed(2);
+            
+            // 保存原始磨损和TGE消耗成本，但计算总支出时合并
+            formData.originalDailyExpense = currentDailyExpense.toFixed(2); // 保存原始磨损
+            formData.tgeTotalCost = totalTgeCost.toFixed(2); // 保存TGE总成本
+            
+            // 今日支出 = 原始支出 + TGE项目消耗成本
+            formData.dailyExpense = (currentDailyExpense + totalTgeCost).toFixed(2);
+            
+            // 保存项目数据
+            formData.projects = projects;
+            formData.tgeItems = tgeItems;
+            formData.previousItems = previousItems;
+            
+            // 保存到accountingData
             accountingData[dateStr] = formData;
             
-            // Save to localStorage
+            // 保存到localStorage
             saveData();
             
-            // Re-render calendar
+            // 重新渲染日历
             renderCalendar(currentYear, currentMonth);
             
-            // Refresh points prediction
+            // 刷新积分预测
             refreshPointsPrediction();
-            // Refresh current points
+            // 刷新当前积分
             refreshCurrentPoints();
             
-            // Close modal
+            // 关闭模态框
             closeEntryModal();
         }
 
@@ -826,6 +1758,7 @@
             let monthlyProjects = 0;
             let monthlyProfit = 0;
             let currentPoints = 0;
+            let monthlyTgeProjects = 0; // 新增TGE项目统计
             
             // Iterate through all dates in accountingData
             Object.keys(accountingData).forEach(dateStr => {
@@ -840,6 +1773,11 @@
                     monthlyIncome += income;
                     monthlyProjects += projects;
                     monthlyProfit += (income - expense);
+                    
+                    // 计算TGE项目数
+                    if (data.tgeItems) {
+                        monthlyTgeProjects += data.tgeItems.length;
+                    }
                 }
             });
             
@@ -873,12 +1811,13 @@
                 'text-xl font-semibold ' + (monthlyProfit >= 0 ? 'positive' : 'negative');
             document.getElementById('currentPoints').textContent = currentPoints.toFixed(2);
             document.getElementById('currentPoints').className = 
-                'text-xl font-semibold ' + (currentPoints >= 0 ? 'positive' : 'negative');
+                'text-xl font-semibold text-yellow-600';
             
             // Calculate user's total statistics
             let totalProfit = 0;
             let totalProjects = 0;
             let totalExpense = 0;
+            let totalTgeProjects = 0; // 新增TGE项目统计
             
             // Iterate through all dates in accountingData for total statistics
             Object.keys(accountingData).forEach(dateStr => {
@@ -893,6 +1832,11 @@
                 totalProfit += dayProfit;
                 totalProjects += projects;
                 totalExpense += expense;
+                
+                // 计算TGE项目总数
+                if (data.tgeItems) {
+                    totalTgeProjects += data.tgeItems.length;
+                }
             });
             
             // Update total statistics DOM elements
@@ -901,7 +1845,7 @@
             document.getElementById('totalExpense').textContent = totalExpense.toFixed(2);
             document.getElementById('currentPointsTotal').textContent = currentPoints.toFixed(2);
             document.getElementById('currentPointsTotal').className = 
-                'text-2xl font-bold ' + (currentPoints >= 0 ? 'text-green-300' : 'text-red-300');
+                'text-2xl font-bold text-yellow-300';
         }
 
         // Points Prediction Functions
@@ -934,7 +1878,7 @@
             // Update DOM element
             document.getElementById('predictedPoints').textContent = totalPoints.toFixed(2);
             document.getElementById('predictedPoints').className = 
-                'text-xl font-semibold ' + (totalPoints >= 0 ? 'positive' : 'negative');
+                'text-xl font-semibold text-yellow-600';
         }
         
         // Current Points Functions
@@ -1101,7 +2045,7 @@
             const entryModal = document.getElementById('entryModal');
             const addUserModal = document.getElementById('addUserModal');
             const importModal = document.getElementById('importModal');
-            const accountOverviewModal = document.getElementById('accountOverviewModal');
+            const dayDetailsModal = document.getElementById('dayDetailsModal');
             
             if (event.target === entryModal) {
                 closeEntryModal();
@@ -1115,16 +2059,119 @@
                 closeImportModal();
             }
             
-            if (event.target === accountOverviewModal) {
-                closeAccountOverview();
+            if (event.target === dayDetailsModal) {
+                closeDayDetails();
             }
         };
+        
+        // Day Details Functions
+        function showDayDetails(dateStr) {
+            const dayData = accountingData[dateStr] || {};
+            
+            // 更新模态框标题
+            document.getElementById('dayDetailsDate').textContent = formatDateDisplay(dateStr);
+            
+            // 填充基本信息
+            document.getElementById('dayDetailsIncome').textContent = (parseFloat(dayData.dailyIncome) || 0).toFixed(2);
+            
+            // 显示分开的磨损信息
+            const originalExpense = parseFloat(dayData.originalDailyExpense) || 0;
+            const tgeCost = parseFloat(dayData.tgeTotalCost) || 0;
+            const totalExpense = parseFloat(dayData.dailyExpense) || 0;
+            
+            document.getElementById('dayDetailsOriginalExpense').textContent = originalExpense.toFixed(2);
+            document.getElementById('dayDetailsTgeCost').textContent = tgeCost.toFixed(2);
+            document.getElementById('dayDetailsTotalExpense').textContent = totalExpense.toFixed(2);
+            
+            const income = parseFloat(dayData.dailyIncome) || 0;
+            const profit = income - totalExpense;
+            const profitElement = document.getElementById('dayDetailsProfit');
+            profitElement.textContent = profit.toFixed(2);
+            profitElement.className = profit >= 0 ? 'text-green-500' : 'text-red-500';
+            
+            // 填充积分信息
+            const earnedPoints = (parseFloat(dayData.pointsEarnedToday) || 0) +
+                                (parseFloat(dayData.balancePointsToday) || 0) +
+                                (parseFloat(dayData.extraPointsToday) || 0);
+            const consumedPoints = parseFloat(dayData.pointsConsumedToday) || 0;
+            const netPoints = earnedPoints - consumedPoints;
+            
+            document.getElementById('dayDetailsEarnedPoints').textContent = earnedPoints.toFixed(2);
+            document.getElementById('dayDetailsConsumedPoints').textContent = consumedPoints.toFixed(2);
+            const netPointsElement = document.getElementById('dayDetailsNetPoints');
+            netPointsElement.textContent = netPoints.toFixed(2);
+            netPointsElement.className = netPoints >= 0 ? 'text-green-500' : 'text-red-500';
+            
+            // 填充项目信息
+            document.getElementById('dayDetailsProjectsClaimed').textContent = dayData.projectsClaimedToday || '0';
+            
+            // 填充空投项目
+            const projectsContainer = document.getElementById('dayDetailsProjects');
+            projectsContainer.innerHTML = '';
+            
+            if (dayData.projects && dayData.projects.length > 0) {
+                dayData.projects.forEach((project, index) => {
+                    const projectDiv = document.createElement('div');
+                    projectDiv.className = 'border-b py-2';
+                    projectDiv.innerHTML = `
+                        <div class="grid grid-cols-4 gap-2 text-sm">
+                            <div><span class="font-medium">代币:</span> ${project.tokenName || ''}</div>
+                            <div><span class="font-medium">数量:</span> ${project.tokenAmount || ''}</div>
+                            <div><span class="font-medium">收入:</span> ${parseFloat(project.income || 0).toFixed(2)} USDT</div>
+                            <div><span class="font-medium">积分:</span> ${project.points || '15'}</div>
+                        </div>
+                    `;
+                    projectsContainer.appendChild(projectDiv);
+                });
+            } else {
+                projectsContainer.innerHTML = '<p class="text-gray-500 text-sm">无空投项目</p>';
+            }
+            
+            // 填充TGE项目
+            const tgeContainer = document.getElementById('dayDetailsTgeItems');
+            tgeContainer.innerHTML = '';
+            
+            if (dayData.tgeItems && dayData.tgeItems.length > 0) {
+                dayData.tgeItems.forEach((tgeItem, index) => {
+                    const tgeDiv = document.createElement('div');
+                    tgeDiv.className = 'border-b py-2';
+                    tgeDiv.innerHTML = `
+                        <div class="grid grid-cols-5 gap-2 text-sm">
+                            <div><span class="font-medium">代币:</span> ${tgeItem.tokenName || ''}</div>
+                            <div><span class="font-medium">数量:</span> ${tgeItem.tokenAmount || ''}</div>
+                            <div><span class="font-medium">收入:</span> ${parseFloat(tgeItem.income || 0).toFixed(2)} USDT</div>
+                            <div><span class="font-medium">积分:</span> ${tgeItem.points || '15'}</div>
+                            <div><span class="font-medium">成本:</span> ${parseFloat(tgeItem.cost || 0).toFixed(2)} USDT</div>
+                        </div>
+                    `;
+                    tgeContainer.appendChild(tgeDiv);
+                });
+            } else {
+                tgeContainer.innerHTML = '<p class="text-gray-500 text-sm">无TGE项目</p>';
+            }
+            
+            // 填充备注
+            document.getElementById('dayDetailsNotes').textContent = dayData.notes || '无备注';
+            
+            // 显示模态框
+            document.getElementById('dayDetailsModal').style.display = 'block';
+        }
+        
+        function closeDayDetails() {
+            document.getElementById('dayDetailsModal').style.display = 'none';
+        }
+        
+        function editDayEntry() {
+            const dateStr = document.getElementById('dayDetailsDate').dataset.date;
+            closeDayDetails();
+            openEntryModal(dateStr);
+        }
         
         // Check if user has made trades today
         function checkTodayTrade(userData) {
             // Get today's date in YYYY-MM-DD format
             const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const todayStr = getTodayDate();
             
             // Check if today's data exists and has expense data
             if (userData[todayStr] && userData[todayStr].dailyExpense !== undefined) {
@@ -1135,14 +2182,37 @@
             return false;
         }
         
-        // Account Overview Functions
+        // Helper function to get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+        
+        // Page Navigation Functions
+        function showMainPage() {
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('accountOverviewPage').classList.add('hidden');
+            document.getElementById('userDetailsPage').classList.add('hidden');
+            // 显示统计框
+            document.getElementById('summarySection').classList.remove('hidden');
+        }
+        
         function showAccountOverview() {
-            document.getElementById('accountOverviewModal').style.display = 'block';
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('accountOverviewPage').classList.remove('hidden');
+            document.getElementById('userDetailsPage').classList.add('hidden');
+            // 隐藏统计框
+            document.getElementById('summarySection').classList.add('hidden');
             refreshAccountOverview();
         }
         
-        function closeAccountOverview() {
-            document.getElementById('accountOverviewModal').style.display = 'none';
+        function showUserDetails(userId) {
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('accountOverviewPage').classList.add('hidden');
+            document.getElementById('userDetailsPage').classList.remove('hidden');
+            // 隐藏统计框
+            document.getElementById('summarySection').classList.add('hidden');
+            loadUserDetails(userId);
         }
         
         function refreshAccountOverview() {
@@ -1166,20 +2236,44 @@
             users.forEach(user => {
                 // Create account card
                 const accountCard = document.createElement('div');
-                accountCard.className = 'bg-white p-4 rounded-lg shadow';
+                accountCard.className = 'bg-white p-4 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer';
+                accountCard.onclick = () => showUserDetails(user.id);
                 
-                // Set user name as card header
-                const header = document.createElement('h4');
-                header.className = 'font-bold text-lg mb-2';
-                header.textContent = user.name;
+                // Set user name as card header with view details button
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-2';
+                
+                const userName = document.createElement('h4');
+                userName.className = 'font-bold text-lg';
+                userName.textContent = user.name;
+                
+                const viewButton = document.createElement('button');
+                viewButton.className = 'bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm flex items-center';
+                viewButton.innerHTML = '<i class="fas fa-eye mr-1"></i>查看详情';
+                viewButton.onclick = (e) => {
+                    e.stopPropagation();
+                    showUserDetails(user.id);
+                };
+                
+                header.appendChild(userName);
+                header.appendChild(viewButton);
                 accountCard.appendChild(header);
                 
                 // Create grid for account data
                 const grid = document.createElement('div');
                 grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4';
                 
-                // Load user's data
-                const userData = JSON.parse(localStorage.getItem(`accountingData_${user.id}`)) || {};
+                // Load user's data with error handling
+                let userData = {};
+                try {
+                    const storedData = localStorage.getItem(`accountingData_${user.id}`);
+                    if (storedData) {
+                        userData = JSON.parse(storedData);
+                    }
+                } catch (error) {
+                    console.error('Error loading user data for overview:', error);
+                    userData = {};
+                }
                 
                 // Calculate account statistics
                 let monthlyProfit = 0;
@@ -1195,23 +2289,27 @@
                 
                 // Process all data for this user
                 Object.keys(userData).forEach(dateStr => {
-                    const data = userData[dateStr];
-                    const income = parseFloat(data.dailyIncome) || 0;
-                    const expense = parseFloat(data.dailyExpense) || 0;
-                    const projects = parseInt(data.projectsClaimedToday) || 0;
-                    
-                    // Calculate profit for this day
-                    const dayProfit = income - expense;
-                    
-                    // Add to total statistics
-                    totalProfit += dayProfit;
-                    totalProjects += projects;
-                    totalExpense += expense;
-                    
-                    // Check if this date is in current month for monthly profit
-                    const date = new Date(dateStr);
-                    if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
-                        monthlyProfit += dayProfit;
+                    try {
+                        const data = userData[dateStr];
+                        const income = parseFloat(data.dailyIncome) || 0;
+                        const expense = parseFloat(data.dailyExpense) || 0;
+                        const projects = parseInt(data.projectsClaimedToday) || 0;
+                        
+                        // Calculate profit for this day
+                        const dayProfit = income - expense;
+                        
+                        // Add to total statistics
+                        totalProfit += dayProfit;
+                        totalProjects += projects;
+                        totalExpense += expense;
+                        
+                        // Check if this date is in current month for monthly profit
+                        const date = new Date(dateStr);
+                        if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+                            monthlyProfit += dayProfit;
+                        }
+                    } catch (error) {
+                        console.error('Error processing account overview data for date:', dateStr, error);
                     }
                 });
                 
@@ -1225,17 +2323,21 @@
                 startDate.setDate(today.getDate() - 15);
                 
                 Object.keys(userData).forEach(dateStr => {
-                    const date = new Date(dateStr);
-                    
-                    // Check if date is within the last 15 days and before today
-                    if (date >= startDate && date < today) {
-                        const data = userData[dateStr];
-                        const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
-                                            (parseFloat(data.balancePointsToday) || 0) +
-                                            (parseFloat(data.extraPointsToday) || 0);
-                        const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                    try {
+                        const date = new Date(dateStr);
                         
-                        predictedPoints += (earnedPoints - consumedPoints);
+                        // Check if date is within the last 15 days and before today
+                        if (date >= startDate && date < today) {
+                            const data = userData[dateStr];
+                            const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
+                                                (parseFloat(data.balancePointsToday) || 0) +
+                                                (parseFloat(data.extraPointsToday) || 0);
+                            const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                            
+                            predictedPoints += (earnedPoints - consumedPoints);
+                        }
+                    } catch (error) {
+                        console.error('Error calculating predicted points for date:', dateStr, error);
                     }
                 });
                 
@@ -1248,28 +2350,32 @@
                 startDateOverview.setDate(todayOverview.getDate() - 16);
                 
                 Object.keys(userData).forEach(dateStr => {
-                    const date = new Date(dateStr);
-                    
-                    // Check if date is within the last 16 days (from startDate to yesterday)
-                    if (date >= startDateOverview && date <= yesterdayOverview) {
-                        const data = userData[dateStr];
-                        const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
-                                            (parseFloat(data.balancePointsToday) || 0) +
-                                            (parseFloat(data.extraPointsToday) || 0);
-                        const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                    try {
+                        const date = new Date(dateStr);
                         
-                        currentPoints += (earnedPoints - consumedPoints);
+                        // Check if date is within the last 16 days (from startDate to yesterday)
+                        if (date >= startDateOverview && date <= yesterdayOverview) {
+                            const data = userData[dateStr];
+                            const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
+                                                (parseFloat(data.balancePointsToday) || 0) +
+                                                (parseFloat(data.extraPointsToday) || 0);
+                            const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                            
+                            currentPoints += (earnedPoints - consumedPoints);
+                        }
+                    } catch (error) {
+                        console.error('Error calculating current points for date:', dateStr, error);
                     }
                 });
                 
                 // Create data items
                 const dataItems = [
                     { label: '本月利润 (USDT)', value: monthlyProfit.toFixed(2), class: monthlyProfit >= 0 ? 'positive' : 'negative' },
-                    { label: '用户总收益 (USDT)', value: totalProfit.toFixed(2), class: totalProfit >= 0 ? 'positive' : 'negative' },
-                    { label: '领取项目总数', value: totalProjects, class: '' },
-                    { label: '目前积分', value: currentPoints.toFixed(2), class: currentPoints >= 0 ? 'positive' : 'negative' },
+                    { label: '用户总利润 (USDT)', value: totalProfit.toFixed(2), class: totalProfit >= 0 ? 'positive' : 'negative' },
+                    { label: 'Alpha项目总数', value: totalProjects, class: '' },
+                    { label: '目前积分', value: currentPoints.toFixed(2), class: 'text-yellow-600' },
                     { label: '总消耗 (USDT)', value: totalExpense.toFixed(2), class: 'negative' },
-                    { label: '预计明日积分', value: predictedPoints.toFixed(2), class: predictedPoints >= 0 ? 'positive' : 'negative' },
+                    { label: '预计明日积分', value: predictedPoints.toFixed(2), class: 'text-yellow-600' },
                     { label: '今日是否刷交易', value: checkTodayTrade(userData) ? '是' : '否', class: checkTodayTrade(userData) ? 'positive' : 'negative' }
                 ];
                 
@@ -1306,43 +2412,517 @@
                 'text-2xl font-bold ' + (allUsersTotalProfit >= 0 ? 'text-green-300' : 'text-red-300');
             document.getElementById('allUsersTotalExpense').textContent = allUsersTotalExpense.toFixed(2);
         }
+        
+        // User Details Functions
+        function loadUserDetails(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            // Set user name
+            document.getElementById('userDetailsName').textContent = user.name;
+            
+            // Load user's data with error handling
+            let userData = {};
+            try {
+                const storedData = localStorage.getItem(`accountingData_${user.id}`);
+                if (storedData) {
+                    userData = JSON.parse(storedData);
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                userData = {};
+            }
+            
+            // Initialize statistics
+            let totalProfit = 0;
+            let totalProjects = 0;
+            let totalExpense = 0;
+            let currentPoints = 0;
+            let totalTrades = 0;
+            let totalWear = 0;
+            let airdropCount = 0;
+            let airdropIncome = 0;
+            let airdropPoints = 0;
+            let tgeCount = 0;
+            let tgeIncome = 0;
+            let tgePoints = 0;
+            let tgeCost = 0;
+            
+            // 使用对象来聚合相同代币的项目数据
+            const aggregatedAirdrops = {};
+            const aggregatedTges = {};
+            
+            // Process all data for this user
+            Object.keys(userData).forEach(dateStr => {
+                try {
+                    const data = userData[dateStr];
+                    const income = parseFloat(data.dailyIncome) || 0;
+                    const expense = parseFloat(data.dailyExpense) || 0;
+                    const projects = parseInt(data.projectsClaimedToday) || 0;
+                    
+                    // Calculate profit for this day
+                    const dayProfit = income - expense;
+                    
+                    // Add to total statistics
+                    totalProfit += dayProfit;
+                    totalProjects += projects;
+                    totalExpense += expense;
+                    
+                    // Count trading days and wear
+                    if (expense > 0) {
+                        totalTrades++;
+                        totalWear += expense;
+                    }
+                    
+                    // Process airdrop projects with aggregation
+                    if (data.projects) {
+                        data.projects.forEach(project => {
+                            const tokenName = project.tokenName || '未知代币';
+                            if (!aggregatedAirdrops[tokenName]) {
+                                aggregatedAirdrops[tokenName] = {
+                                    count: 0,
+                                    tokenAmount: 0,
+                                    income: 0,
+                                    points: 0
+                                };
+                            }
+                            
+                            aggregatedAirdrops[tokenName].count++;
+                            aggregatedAirdrops[tokenName].tokenAmount += parseFloat(project.tokenAmount) || 0;
+                            aggregatedAirdrops[tokenName].income += parseFloat(project.income) || 0;
+                            aggregatedAirdrops[tokenName].points += parseFloat(project.points) || 0;
+                            
+                            // 同时保持原有计数
+                            airdropCount++;
+                            airdropIncome += parseFloat(project.income) || 0;
+                            airdropPoints += parseFloat(project.points) || 0;
+                        });
+                    }
+                    
+                    // Process TGE projects with aggregation
+                    if (data.tgeItems) {
+                        data.tgeItems.forEach(tgeItem => {
+                            const tokenName = tgeItem.tokenName || '未知代币';
+                            if (!aggregatedTges[tokenName]) {
+                                aggregatedTges[tokenName] = {
+                                    count: 0,
+                                    tokenAmount: 0,
+                                    income: 0,
+                                    points: 0,
+                                    cost: 0
+                                };
+                            }
+                            
+                            aggregatedTges[tokenName].count++;
+                            aggregatedTges[tokenName].tokenAmount += parseFloat(tgeItem.tokenAmount) || 0;
+                            aggregatedTges[tokenName].income += parseFloat(tgeItem.income) || 0;
+                            aggregatedTges[tokenName].points += parseFloat(tgeItem.points) || 0;
+                            aggregatedTges[tokenName].cost += parseFloat(tgeItem.cost) || 0;
+                            
+                            // 同时保持原有计数
+                            tgeCount++;
+                            tgeIncome += parseFloat(tgeItem.income) || 0;
+                            tgePoints += parseFloat(tgeItem.points) || 0;
+                            tgeCost += parseFloat(tgeItem.cost) || 0;
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing user data for date:', dateStr, error);
+                }
+            });
+            
+            // Process previous projects with aggregation
+            Object.keys(userData).forEach(dateStr => {
+                const data = userData[dateStr];
+                if (data.previousItems) {
+                    data.previousItems.forEach(previousItem => {
+                        const tokenName = previousItem.tokenName || '未知代币';
+                        const type = previousItem.type || 'airdrop'; // 默认为空投项目
+                        
+                        if (type === 'tge') {
+                            // TGE项目 - 累加到TGE统计
+                            if (!aggregatedTges[tokenName]) {
+                                aggregatedTges[tokenName] = {
+                                    count: 0,
+                                    tokenAmount: 0,
+                                    income: 0,
+                                    points: 0,
+                                    cost: 0
+                                };
+                            }
+                            
+                            aggregatedTges[tokenName].count++;
+                            aggregatedTges[tokenName].income += parseFloat(previousItem.income) || 0;
+                            
+                            // 同时保持原有计数
+                            tgeCount++;
+                            tgeIncome += parseFloat(previousItem.income) || 0;
+                        } else {
+                            // 空投项目 - 累加到空投统计
+                            if (!aggregatedAirdrops[tokenName]) {
+                                aggregatedAirdrops[tokenName] = {
+                                    count: 0,
+                                    tokenAmount: 0,
+                                    income: 0,
+                                    points: 0
+                                };
+                            }
+                            
+                            aggregatedAirdrops[tokenName].count++;
+                            aggregatedAirdrops[tokenName].income += parseFloat(previousItem.income) || 0;
+                            
+                            // 同时保持原有计数
+                            airdropCount++;
+                            airdropIncome += parseFloat(previousItem.income) || 0;
+                        }
+                    });
+                }
+            });
+            
+            // 更新统计显示为聚合后的数据
+            airdropCount = Object.keys(aggregatedAirdrops).length;
+            tgeCount = Object.keys(aggregatedTges).length;
+            
+            // Calculate current points for last 16 days
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - 16);
+            
+            Object.keys(userData).forEach(dateStr => {
+                try {
+                    const date = new Date(dateStr);
+                    
+                    // Check if date is within the last 16 days (from startDate to yesterday)
+                    if (date >= startDate && date <= yesterday) {
+                        const data = userData[dateStr];
+                        const earnedPoints = (parseFloat(data.pointsEarnedToday) || 0) +
+                                            (parseFloat(data.balancePointsToday) || 0) +
+                                            (parseFloat(data.extraPointsToday) || 0);
+                        const consumedPoints = parseFloat(data.pointsConsumedToday) || 0;
+                        
+                        currentPoints += (earnedPoints - consumedPoints);
+                    }
+                } catch (error) {
+                    console.error('Error calculating user points for date:', dateStr, error);
+                }
+            });
+            
+            // Update basic statistics
+            document.getElementById('userTotalProfit').textContent = totalProfit.toFixed(2);
+            document.getElementById('userTotalProjects').textContent = totalProjects;
+            document.getElementById('userCurrentPoints').textContent = currentPoints.toFixed(2);
+            document.getElementById('userTotalExpense').textContent = totalExpense.toFixed(2);
+            
+            // Update trade wear statistics
+            document.getElementById('userTotalTrades').textContent = totalTrades;
+            document.getElementById('userTotalWear').textContent = totalWear.toFixed(2);
+            document.getElementById('userAvgDailyWear').textContent = totalTrades > 0 ? (totalWear / totalTrades).toFixed(2) : '0.00';
+            
+            // Update airdrop statistics
+            document.getElementById('userAirdropCount').textContent = airdropCount;
+            document.getElementById('userAirdropIncome').textContent = airdropIncome.toFixed(2);
+            document.getElementById('userAirdropPoints').textContent = airdropPoints.toFixed(2);
+            document.getElementById('userAvgAirdropIncome').textContent = airdropCount > 0 ? (airdropIncome / airdropCount).toFixed(2) : '0.00';
+            
+            // Update TGE statistics
+            document.getElementById('userTgeCount').textContent = tgeCount;
+            document.getElementById('userTgeIncome').textContent = tgeIncome.toFixed(2);
+            document.getElementById('userTgePoints').textContent = tgePoints.toFixed(2);
+            document.getElementById('userTgeCost').textContent = tgeCost.toFixed(2);
+            
+            // Load detailed project lists
+            loadUserProjectLists(userData);
+        }
+        
+        function loadUserProjectLists(userData) {
+            const airdropList = document.getElementById('userAirdropList');
+            const tgeList = document.getElementById('userTgeList');
+            
+            airdropList.innerHTML = '';
+            tgeList.innerHTML = '';
+            
+            // 使用对象来聚合相同代币的空投项目
+            const aggregatedAirdrops = {};
+            
+            // 使用对象来聚合相同代币的TGE项目
+            const aggregatedTges = {};
+            
+            // 收集并聚合所有空投项目
+            Object.keys(userData).forEach(dateStr => {
+                try {
+                    const data = userData[dateStr];
+                    if (data && data.projects) {
+                        data.projects.forEach(project => {
+                            const tokenName = project.tokenName || '未知代币';
+                            if (!aggregatedAirdrops[tokenName]) {
+                                aggregatedAirdrops[tokenName] = {
+                                    tokenAmount: 0,
+                                    income: 0,
+                                    points: 0,
+                                    dates: []
+                                };
+                            }
+                            
+                            aggregatedAirdrops[tokenName].tokenAmount += parseFloat(project.tokenAmount) || 0;
+                            aggregatedAirdrops[tokenName].income += parseFloat(project.income) || 0;
+                            aggregatedAirdrops[tokenName].points += parseFloat(project.points) || 0;
+                            aggregatedAirdrops[tokenName].dates.push(dateStr);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing airdrop projects for date:', dateStr, error);
+                }
+            });
+            
+            // 收集并聚合所有TGE项目
+            Object.keys(userData).forEach(dateStr => {
+                try {
+                    const data = userData[dateStr];
+                    if (data && data.tgeItems) {
+                        data.tgeItems.forEach(tgeItem => {
+                            const tokenName = tgeItem.tokenName || '未知代币';
+                            if (!aggregatedTges[tokenName]) {
+                                aggregatedTges[tokenName] = {
+                                    tokenAmount: 0,
+                                    income: 0,
+                                    points: 0,
+                                    cost: 0,
+                                    dates: []
+                                };
+                            }
+                            
+                            aggregatedTges[tokenName].tokenAmount += parseFloat(tgeItem.tokenAmount) || 0;
+                            aggregatedTges[tokenName].income += parseFloat(tgeItem.income) || 0;
+                            aggregatedTges[tokenName].points += parseFloat(tgeItem.points) || 0;
+                            aggregatedTges[tokenName].cost += parseFloat(tgeItem.cost) || 0;
+                            aggregatedTges[tokenName].dates.push(dateStr);
+                        });
+                    }
+                    
+                    // 收集并聚合所有以往项目
+                    if (data && data.previousItems) {
+                        data.previousItems.forEach(previousItem => {
+                            const tokenName = previousItem.tokenName || '未知代币';
+                            const type = previousItem.type || 'airdrop'; // 默认为空投项目
+                            
+                            if (type === 'tge') {
+                                // TGE项目 - 累加到TGE聚合
+                                if (!aggregatedTges[tokenName]) {
+                                    aggregatedTges[tokenName] = {
+                                        tokenAmount: 0,
+                                        income: 0,
+                                        points: 0,
+                                        cost: 0,
+                                        dates: []
+                                    };
+                                }
+                                
+                                aggregatedTges[tokenName].income += parseFloat(previousItem.income) || 0;
+                                aggregatedTges[tokenName].dates.push(previousItem.date || dateStr);
+                            } else {
+                                // 空投项目 - 累加到空投聚合
+                                if (!aggregatedAirdrops[tokenName]) {
+                                    aggregatedAirdrops[tokenName] = {
+                                        tokenAmount: 0,
+                                        income: 0,
+                                        points: 0,
+                                        dates: []
+                                    };
+                                }
+                                
+                                aggregatedAirdrops[tokenName].income += parseFloat(previousItem.income) || 0;
+                                aggregatedAirdrops[tokenName].dates.push(previousItem.date || dateStr);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing TGE/previous projects for date:', dateStr, error);
+                }
+            });
+            
+            // 显示聚合后的空投项目（按时间倒序）
+            if (Object.keys(aggregatedAirdrops).length > 0) {
+                // 将空投项目按最新日期排序（倒序）
+                const sortedAirdrops = Object.entries(aggregatedAirdrops)
+                    .map(([tokenName, project]) => ({
+                        tokenName,
+                        ...project,
+                        latestDate: project.dates.sort().reverse()[0] // 获取最新日期
+                    }))
+                    .sort((a, b) => b.latestDate.localeCompare(a.latestDate)); // 按最新日期倒序排序
+                
+                sortedAirdrops.forEach(item => {
+                    const projectDiv = document.createElement('div');
+                    projectDiv.className = 'border rounded p-3 bg-gray-50 mb-3';
+                    projectDiv.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-medium">${item.tokenName}</div>
+                            <div class="text-sm text-gray-500">${item.dates.length}次记录</div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总数量</div>
+                                <div class="font-medium">${item.tokenAmount}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总收入</div>
+                                <div class="font-medium">${item.income.toFixed(2)} U</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总积分</div>
+                                <div class="font-medium">${item.points.toFixed(2)}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">平均收入</div>
+                                <div class="font-medium">${(item.income / item.dates.length).toFixed(2)} U</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            记录日期: ${item.dates.sort().reverse().join(', ')}
+                        </div>
+                    `;
+                    airdropList.appendChild(projectDiv);
+                });
+            } else {
+                airdropList.innerHTML = '<p class="text-gray-500 text-center">暂无空投项目数据</p>';
+            }
+            
+            // 显示聚合后的TGE项目（按时间倒序）
+            if (Object.keys(aggregatedTges).length > 0) {
+                // 将TGE项目按最新日期排序（倒序）
+                const sortedTges = Object.entries(aggregatedTges)
+                    .map(([tokenName, tgeItem]) => ({
+                        tokenName,
+                        ...tgeItem,
+                        latestDate: tgeItem.dates.sort().reverse()[0] // 获取最新日期
+                    }))
+                    .sort((a, b) => b.latestDate.localeCompare(a.latestDate)); // 按最新日期倒序排序
+                
+                sortedTges.forEach(item => {
+                    const tgeDiv = document.createElement('div');
+                    tgeDiv.className = 'border rounded p-3 bg-gray-50 mb-3';
+                    tgeDiv.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-medium">${item.tokenName}</div>
+                            <div class="text-sm text-gray-500">${item.dates.length}次记录</div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总数量</div>
+                                <div class="font-medium">${item.tokenAmount}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总收入</div>
+                                <div class="font-medium">${item.income.toFixed(2)} U</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总积分</div>
+                                <div class="font-medium">${item.points.toFixed(2)}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-500 text-xs">总成本</div>
+                                <div class="font-medium">${item.cost.toFixed(2)} U</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            记录日期: ${item.dates.sort().reverse().join(', ')}
+                        </div>
+                    `;
+                    tgeList.appendChild(tgeDiv);
+                });
+            } else {
+                tgeList.innerHTML = '<p class="text-gray-500 text-center">暂无TGE项目数据</p>';
+            }
+        }
     </script>
     
-    <!-- Account Overview Modal -->
-    <div id="accountOverviewModal" class="modal fade-in">
-        <div class="modal-content" style="max-width: 800px;">
-            <span class="close" onclick="closeAccountOverview()">&times;</span>
-            <h2 class="text-xl font-bold mb-4">账户总览</h2>
+
+    
+    <!-- Day Details Modal -->
+    <div id="dayDetailsModal" class="modal fade-in">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="closeDayDetails()">&times;</span>
+            <h2 class="text-xl font-bold mb-4">日期详情 - <span id="dayDetailsDate"></span></h2>
             
-            <!-- 新增的总览统计栏 -->
-            <div id="overviewSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg shadow">
-                    <h3 class="text-gray-100 text-sm">当前用户数</h3>
-                    <p id="totalUsersCount" class="text-2xl font-bold">0</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm mb-2">收入/支出</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>今日售卖收入:</span>
+                            <span id="dayDetailsIncome" class="font-semibold">0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>今日磨损:</span>
+                            <span id="dayDetailsOriginalExpense" class="font-semibold">0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>TGE消耗成本:</span>
+                            <span id="dayDetailsTgeCost" class="font-semibold">0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span>总支出:</span>
+                            <span id="dayDetailsTotalExpense" class="font-bold">0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span>今日利润:</span>
+                            <span id="dayDetailsProfit" class="font-bold">0.00</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow">
-                    <h3 class="text-gray-100 text-sm">所有用户总利润 (USDT)</h3>
-                    <p id="allUsersTotalProfit" class="text-2xl font-bold">0.00</p>
+                
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm mb-2">积分</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>获取积分:</span>
+                            <span id="dayDetailsEarnedPoints" class="font-semibold text-green-500">0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>消耗积分:</span>
+                            <span id="dayDetailsConsumedPoints" class="font-semibold text-red-500">0.00</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span>净积分:</span>
+                            <span id="dayDetailsNetPoints" class="font-bold">0.00</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-lg shadow">
-                    <h3 class="text-gray-100 text-sm">所有用户总消耗 (USDT)</h3>
-                    <p id="allUsersTotalExpense" class="text-2xl font-bold">0.00</p>
+                
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm mb-2">项目</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>领取项目数:</span>
+                            <span id="dayDetailsProjectsClaimed" class="font-semibold">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm mb-2">备注</h3>
+                    <p id="dayDetailsNotes" class="text-gray-700">无备注</p>
                 </div>
             </div>
             
             <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-2">各账户数据概览</h3>
-                <div id="accountOverviewData" class="space-y-4">
-                    <!-- Account data will be populated here -->
-                    <p>加载中...</p>
+                <h3 class="text-lg font-semibold mb-3">空投项目详情</h3>
+                <div id="dayDetailsProjects" class="bg-white p-4 rounded-lg shadow">
+                    <p class="text-gray-500">无领取项目</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-3">TGE项目详情</h3>
+                <div id="dayDetailsTgeItems" class="bg-white p-4 rounded-lg shadow">
+                    <p class="text-gray-500">无TGE项目</p>
                 </div>
             </div>
             
             <div class="flex items-center justify-end">
-                <button onclick="refreshAccountOverview()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
-                    刷新数据
-                </button>
-                <button onclick="closeAccountOverview()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                <button onclick="closeDayDetails()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     关闭
                 </button>
             </div>
